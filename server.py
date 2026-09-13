@@ -24,6 +24,7 @@ import hmac
 import json
 import os
 import sys
+import traceback
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -266,7 +267,14 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(422, {"error": str(exc)})
         except Exception as exc:  # never drop the connection on the page
             self._send_json(500, {"error": f"The server hit an unexpected {type(exc).__name__}."})
-            raise
+            # Log the type and the stack, never str(exc). An unexpected error
+            # can carry request content in its message - a pydantic
+            # ValidationError quotes the input it rejected - and reload.sh -d
+            # sends stderr to reload.log, so re-raising would put transcripts
+            # on disk. Traceback frames are source lines, not values, so the
+            # stack is safe to keep and is what makes the report useful.
+            self.log_message("unhandled %s in %s", type(exc).__name__, route)
+            sys.stderr.write("".join(traceback.format_tb(exc.__traceback__)))
         else:
             self._send_json(200, entry.model_dump())
 
