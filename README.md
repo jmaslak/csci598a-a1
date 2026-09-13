@@ -80,10 +80,16 @@ below.
 
 ```sh
 cp Caddyfile.example Caddyfile
-$EDITOR Caddyfile      # set the domain and the ACME email
-./reload.sh -d         # start the Python server on loopback first
-sudo caddy run         # sudo only because of ports 80 and 443
+$EDITOR Caddyfile                  # set the domain and the ACME email
+caddy validate --config Caddyfile  # always, before restarting the service
+./reload.sh -d                     # start the Python server on loopback first
+sudo caddy run                     # sudo only because of ports 80 and 443
 ```
+
+**Validate before restarting.** A Caddyfile whose global options block loses its
+closing brace still looks fine to the eye, but every later block ends up nested
+inside it. `caddy validate` catches that in a second; a service restart turns it
+into downtime. `caddy fmt` re-indents and makes the nesting obvious.
 
 `server.py` binds `127.0.0.1` only, so once Caddy is in front the app is
 reachable exclusively through it.
@@ -97,8 +103,14 @@ uncomment the `acme_ca` staging line in the global block: staging certificates
 are not publicly trusted, so the browser warns, but the rate limits are far
 looser and a misconfiguration costs nothing.
 
-`localhost` is left as a commented alternative. It cannot use Let's Encrypt — a
-public CA cannot validate it — so Caddy issues from its own internal CA there.
+For local work, change the site address to `localhost`. Let's Encrypt cannot
+validate that name, so Caddy issues from its own internal CA there.
+
+The config is a single inlined site block on purpose — no snippet, no `import`.
+Snippets only register at the *top level* of the file, so a global block missing
+its brace silently nests the snippet and `import` then fails with "File to
+import not found". Inlining cannot fail that way. For a second hostname, wrap
+the body in `(composer) { }` at top level and `import composer` from each site.
 
 Two reasons this matters beyond tidiness:
 
