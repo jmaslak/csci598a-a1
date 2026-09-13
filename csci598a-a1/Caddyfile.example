@@ -1,0 +1,85 @@
+# Example Caddy front end for the composer, with Let's Encrypt certificates.
+#
+#   cp Caddyfile.example Caddyfile
+#   $EDITOR Caddyfile          # set the domain and the email
+#   ./reload.sh -d             # start server.py on loopback first
+#   sudo caddy run             # sudo only because of ports 80 and 443
+#
+# Caddy terminates TLS and proxies to server.py on 127.0.0.1:8777, which binds
+# loopback only - once Caddy is in front, that is the sole way in.
+#
+# Before the first run, Let's Encrypt needs all of:
+#   1. A real domain whose A/AAAA record points at this host.
+#   2. Inbound TCP 80 and 443 reachable from the internet. Port 80 serves the
+#      HTTP-01 challenge and the redirect to HTTPS; do not firewall it off.
+#   3. An email below, so the CA can reach you about expiry or account problems.
+# Nothing else: Caddy requests, installs and renews the certificate on its own.
+#
+# TLS is the point of fronting this at all:
+#   - Basic auth base64-encodes the password, it does not encrypt it.
+#   - SpeechRecognition and getUserMedia need a secure context. localhost counts
+#     for local work; every other hostname needs real HTTPS or the microphone
+#     will not work at all.
+
+{
+	# Let's Encrypt account contact. Required for ACME; use a mailbox you read.
+	email admin@example.edu
+
+(composer) {
+	encode zstd gzip
+
+	header {
+		# The page is meaningless framed - an embedding frame is exactly what
+		# withholds microphone access - so forbid it and grant the mic to self.
+		Permissions-Policy "microphone=(self), camera=(), geolocation=()"
+		X-Frame-Options "DENY"
+
+		# 'unsafe-inline' is needed because composer.html carries its own
+		# <style> and <script>. It is tolerable here because the page never
+		# puts user text through innerHTML - the only two innerHTML writes are
+		# static SVG constants, and every piece of spoken or typed text is
+		# rendered with textContent.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	# Transcripts are the only large body; nothing here needs megabytes.
+	request_body {
+		max_size 1MB
+	}
+
+	reverse_proxy 127.0.0.1:8777 {
+		header_up X-Real-IP {remote_host}
+
+		# server.py speaks HTTP/1.0, so every request closes its connection.
+		# Correct, just not reusable. Set protocol_version = "HTTP/1.1" on the
+		# handler in server.py if the extra round trips ever matter.
+	}
+
+	# Optional second gate at the proxy. server.py already requires Basic auth
+	# and Caddy forwards the Authorization header, so use the SAME username and
+	# password here or the browser will be challenged twice. Generate the hash:
+	#
+	#     caddy hash-password --plaintext 'csci598a'
+	#
+	# (The directive is basic_auth on Caddy 2.8+, basicauth on older releases.)
+	#
+	# basic_auth {
+	#     csci598a $2a$14$REPLACE_WITH_THE_HASH_YOU_GENERATED
+	# }
+
+	log {
+		output file access.log
+		format console
+	}
+}
+
+# The public hostname. Replace with your own - this is what appears on the
+# certificate, so it must be the name the DNS record points here.
+composer.example.edu {
+	import composer
+}

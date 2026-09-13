@@ -1,0 +1,1378 @@
+<title>CaringBridge First Entry</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
+<style>
+  /* Palette and shape tokens taken from caringbridge.org's own stylesheet. */
+  :root {
+    --gray-0:#fff; --gray-50:#fafafa; --gray-100:#f5f5f5; --gray-200:#e8eeed;
+    --gray-300:#d4d4d4; --gray-400:#a3a3a3; --gray-500:#737373; --gray-600:#525252;
+    --gray-700:#404040; --gray-800:#262626;
+
+    --berry-200:#e3c5d3; --berry-300:#c99bb0; --berry-400:#b06486;
+    --berry-450:#ab3f70; --berry-500:#963862; --berry-800:#863056; --berry-900:#4a1c30;
+    --blue-200:#d8ddf0; --blue-500:#617bd6; --blue-600:#495dba; --blue-900:#22398a;
+    --sky:#c6dde7; --sky-light:#edf0f2; --coral:#ff7c6f; --yellow:#edd780;
+    --navy:#22538b; --indigo:#24384c;
+
+    --body-bg: var(--gray-50);
+    --body-text: var(--indigo);
+    --primary: var(--berry-500);
+    --link: var(--blue-600);
+
+    --radius: 6px; --radius-medium: 8px; --radius-gentle: 12px; --radius-large: 24px;
+    --pill: 500px;
+    --shadow: 0 1px 5px 0 rgba(0,0,0,.05);
+    --shadow-lift: 0 2px 14px 0 rgba(36,56,76,.10);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--body-bg);
+    color: var(--body-text);
+    font-family: "Figtree", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.2; text-wrap: balance; }
+  p { margin: 0; }
+  button { font-family: inherit; }
+
+  /* ---------------- global site header ---------------- */
+  .cb-header {
+    background: var(--gray-0);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky; top: 0; z-index: 150;
+  }
+  .cb-header-inner {
+    max-width: 1100px; margin: 0 auto;
+    padding-inline: 20px; padding-block: 14px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .wordmark {
+    font-size: 1.42rem; font-weight: 800; letter-spacing: -.02em;
+    color: var(--berry-500); margin-right: auto;
+  }
+  .wordmark span { color: var(--blue-900); }
+  .cb-nav { display: flex; gap: 22px; align-items: center; }
+  .cb-nav span {
+    font-size: .92rem; font-weight: 600; color: var(--indigo); cursor: default;
+  }
+  .demo-pill {
+    background: var(--yellow); color: var(--berry-900);
+    border-radius: var(--pill); padding: 5px 13px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .cb-nav { display: none; }
+  }
+
+  /* ---------------- the person's site band ---------------- */
+  .site-band { background: var(--gray-0); border-bottom: 1px solid var(--gray-200); }
+  .cover {
+    height: 132px;
+    background:
+      radial-gradient(120% 140% at 12% 0%, rgba(255,255,255,.85) 0%, rgba(255,255,255,0) 55%),
+      linear-gradient(104deg, var(--sky) 0%, #dfe7f2 42%, var(--berry-200) 100%);
+  }
+  .site-head {
+    max-width: 1100px; margin: 0 auto; padding-inline: 20px;
+    display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+    margin-top: -34px;
+  }
+  .site-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--gray-0); border: 3px solid var(--gray-0);
+    box-shadow: var(--shadow-lift);
+    display: grid; place-items: center;
+    color: var(--berry-500); flex: none;
+  }
+  .site-avatar svg { width: 34px; height: 34px; }
+  .site-titles { padding-bottom: 4px; }
+  .site-titles h1 { font-size: 1.42rem; }
+  .site-titles p { font-size: .86rem; color: var(--gray-500); font-weight: 500; margin-top: 2px; }
+  .tabs {
+    max-width: 1100px; margin: 18px auto 0; padding-inline: 20px;
+    display: flex; gap: 26px; overflow-x: auto;
+  }
+  .tabs span {
+    padding-bottom: 11px; font-size: .93rem; font-weight: 600;
+    color: var(--gray-500); white-space: nowrap; cursor: default;
+    border-bottom: 3px solid transparent;
+  }
+  .tabs span.on { color: var(--berry-500); border-bottom-color: var(--berry-500); }
+
+  /* ---------------- layout ---------------- */
+  .cb-main {
+    max-width: 1100px; margin: 0 auto;
+    padding-inline: 20px; padding-block: 28px 60px;
+    display: grid; grid-template-columns: minmax(0,1fr) 296px; gap: 26px; align-items: start;
+  }
+  @media (max-width: 880px) { .cb-main { grid-template-columns: minmax(0,1fr); } }
+
+  .card {
+    background: var(--gray-0); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-gentle); box-shadow: var(--shadow);
+  }
+  .card-head {
+    padding: 18px 22px; border-bottom: 1px solid var(--gray-200);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .card-head h2 { font-size: 1.12rem; }
+  .card-head .meta { font-size: .76rem; font-weight: 600; color: var(--gray-500); letter-spacing: .02em; text-transform: uppercase; }
+  .card-body { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .lede { color: var(--gray-600); font-size: 1rem; max-width: 58ch; }
+
+  /* ---------------- buttons ---------------- */
+  .btn {
+    border-radius: var(--pill); padding: 11px 22px; cursor: pointer;
+    font-size: .94rem; font-weight: 700; border: 2px solid transparent;
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .btn-primary { background: var(--berry-500); color: var(--gray-0); }
+  .btn-primary:hover:not([disabled]) { background: var(--berry-800); }
+  .btn-outline { background: var(--gray-0); color: var(--berry-500); border-color: var(--berry-500); }
+  .btn-outline:hover { background: var(--berry-200); }
+  .btn-text { background: transparent; color: var(--link); padding-inline: 10px; }
+  .btn-text:hover { color: var(--berry-500); text-decoration: underline; }
+  .btn[disabled] { opacity: .42; cursor: not-allowed; }
+  .btn:focus-visible, .choice:focus-visible, summary:focus-visible,
+  input:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--blue-500); outline-offset: 2px;
+  }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .row-split { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+
+  /* ---------------- step rail ---------------- */
+  .rail { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: .74rem; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; }
+  .rail .node { display: flex; align-items: center; gap: 7px; }
+  .rail .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--gray-300); }
+  .rail .node[data-state="active"] { color: var(--berry-500); }
+  .rail .node[data-state="active"] .dot { background: var(--berry-500); border-color: var(--berry-500); }
+  .rail .node[data-state="done"] .dot { background: var(--gray-300); border-color: var(--gray-300); }
+  .rail .bar { flex: 1 1 16px; min-width: 10px; height: 2px; background: var(--gray-200); }
+
+  /* ---------------- choices ---------------- */
+  .choices { display: grid; gap: 14px; }
+  .choice {
+    display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start;
+    text-align: left; width: 100%; cursor: pointer; color: inherit; font: inherit;
+    background: var(--gray-0); border: 2px solid var(--gray-200);
+    border-radius: var(--radius-gentle); padding: 20px;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  .choice:hover { border-color: var(--berry-400); box-shadow: var(--shadow-lift); }
+  .choice .glyph {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--sky-light); color: var(--berry-500);
+    display: grid; place-items: center; flex: none;
+  }
+  .choice .glyph svg { width: 22px; height: 22px; display: block; }
+  .choice h3 { font-size: 1.05rem; margin-bottom: 4px; }
+  .choice p { color: var(--gray-600); font-size: .95rem; }
+  .choice .tag { display: block; margin-top: 9px; font-size: .76rem; font-weight: 700; color: var(--blue-600); }
+
+  /* ---------------- recorder ---------------- */
+  .recorder {
+    background: var(--sky-light); border-radius: var(--radius-gentle);
+    padding: 30px 20px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  }
+  .mic-stack { position: relative; width: 138px; height: 138px; display: grid; place-items: center; }
+  .mic-ring {
+    position: absolute; inset: 0; border-radius: 50%; background: var(--sky);
+    transform: scale(.6); transition: transform .09s linear;
+  }
+  .mic-ring.live { background: #ffd6d1; }
+  .mic-btn {
+    position: relative; width: 80px; height: 80px; border-radius: 50%;
+    border: none; cursor: pointer; display: grid; place-items: center;
+    background: var(--berry-500); color: var(--gray-0); box-shadow: var(--shadow-lift);
+  }
+  .mic-btn:hover { background: var(--berry-800); }
+  .mic-btn[data-live="true"], .mic-btn[data-live="true"]:hover { background: var(--coral); }
+  .mic-btn svg { width: 30px; height: 30px; display: block; }
+  .timer { font-size: 1.55rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .status { font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gray-500); }
+  .transcript-live {
+    width: 100%; text-align: left; min-height: 5.5rem;
+    background: var(--gray-0); border-radius: var(--radius-medium);
+    padding: 16px; font-size: 1rem; color: var(--gray-700);
+    max-height: 15rem; overflow-y: auto;
+  }
+  .transcript-live .interim { color: var(--gray-400); }
+  .transcript-live .placeholder { color: var(--gray-400); font-style: italic; }
+
+  /* ---------------- notices ---------------- */
+  .notice {
+    background: var(--sky-light); border-left: 4px solid var(--blue-500);
+    border-radius: var(--radius); padding: 13px 16px; font-size: .9rem; color: var(--gray-700);
+  }
+  .notice.warn { background: #fdf6e3; border-left-color: var(--yellow); }
+  .label { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gray-500); }
+  textarea.fallback {
+    width: 100%; min-height: 9.5rem; padding: 14px;
+    border: 1px solid var(--gray-300); border-radius: var(--radius-medium);
+    background: var(--gray-0); color: var(--indigo);
+    font-family: inherit; font-size: 1rem; line-height: 1.6; resize: vertical;
+  }
+
+  /* ---------------- processing ---------------- */
+  .skeleton { display: flex; flex-direction: column; gap: 11px; width: 100%; }
+  .skeleton span {
+    display: block; height: 13px; border-radius: var(--radius);
+    background: linear-gradient(90deg, var(--gray-100) 0%, var(--gray-200) 50%, var(--gray-100) 100%);
+    background-size: 220% 100%; animation: sweep 1.5s ease-in-out infinite;
+  }
+  .skeleton span:nth-child(2) { width: 93%; animation-delay: .1s; }
+  .skeleton span:nth-child(3) { width: 79%; animation-delay: .2s; }
+  .skeleton span:nth-child(4) { width: 87%; animation-delay: .3s; }
+  .skeleton span:nth-child(5) { width: 45%; animation-delay: .4s; }
+  @keyframes sweep { from { background-position: 140% 0; } to { background-position: -40% 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton span { animation: none; }
+    .choice, .btn, .mic-ring { transition: none; }
+  }
+
+  /* ---------------- editor ---------------- */
+  .field-label { font-size: .82rem; font-weight: 700; color: var(--indigo); margin-bottom: 6px; display: block; }
+  #title-field {
+    width: 100%; padding: 12px 14px; font-family: inherit; font-size: 1.12rem; font-weight: 700;
+    color: var(--indigo); background: var(--gray-0);
+    border: 1px solid var(--gray-300); border-radius: var(--radius-medium);
+  }
+  .fake-toolbar {
+    display: flex; gap: 4px; align-items: center; flex-wrap: wrap;
+    border: 1px solid var(--gray-300); border-bottom: none;
+    border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+    background: var(--gray-100); padding: 7px 10px; color: var(--gray-500);
+  }
+  .fake-toolbar b, .fake-toolbar i, .fake-toolbar u { width: 28px; text-align: center; font-size: .95rem; cursor: default; }
+  .fake-toolbar .sep { width: 1px; height: 18px; background: var(--gray-300); margin-inline: 5px; }
+  #body-field {
+    width: 100%; min-height: 13rem; padding: 16px;
+    font-family: inherit; font-size: 1.02rem; line-height: 1.68; color: var(--indigo);
+    background: var(--gray-0); border: 1px solid var(--gray-300);
+    border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+    resize: none; overflow: hidden; display: block;
+  }
+  #title-field::placeholder, #body-field::placeholder, textarea.fallback::placeholder { color: var(--gray-400); }
+  .count { font-size: .84rem; color: var(--gray-500); font-variant-numeric: tabular-nums; }
+
+  .cleanup-box {
+    background: var(--sky-light); border-radius: var(--radius-medium); padding: 15px 17px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .cleanup-box ul { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .cleanup-box li { list-style: none; font-size: .9rem; color: var(--gray-700); display: flex; gap: 9px; }
+  .cleanup-box li::before { content: "✓"; color: var(--berry-500); font-weight: 700; }
+
+  details.raw summary {
+    cursor: pointer; font-size: .86rem; font-weight: 700; color: var(--link);
+  }
+  details.raw p { margin-top: 10px; color: var(--gray-500); font-size: .95rem; font-style: italic; }
+
+  /* ---------------- posted entry ---------------- */
+  .entry { padding: 26px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .entry-byline { display: flex; align-items: center; gap: 11px; }
+  .entry-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex: none;
+    background: var(--berry-200); color: var(--berry-900);
+    display: grid; place-items: center; font-weight: 700; font-size: .92rem;
+  }
+  .entry-byline .who { font-weight: 700; font-size: .96rem; }
+  .entry-byline .when { font-size: .84rem; color: var(--gray-500); }
+  .entry h2 { font-size: 1.42rem; }
+  .entry-body p { margin-bottom: .95em; }
+  .entry-body p:last-child { margin-bottom: 0; }
+  .entry-actions {
+    border-top: 1px solid var(--gray-200); padding-top: 14px;
+    display: flex; gap: 22px; color: var(--gray-400); font-size: .9rem; font-weight: 600;
+  }
+  .entry-actions span { display: flex; gap: 7px; align-items: center; cursor: default; }
+  .entry-actions svg { width: 17px; height: 17px; }
+  .ribbon {
+    background: var(--berry-500); color: var(--gray-0);
+    border-radius: var(--radius-gentle) var(--radius-gentle) 0 0;
+    padding: 10px 22px; font-size: .82rem; font-weight: 700; letter-spacing: .03em;
+  }
+
+  /* ---------------- spoken revisions ---------------- */
+  .revise { border-top: 1px solid var(--gray-200); padding-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .revise .blurb { font-size: .92rem; color: var(--gray-600); margin-top: 3px; max-width: 42ch; }
+  .recorder-sm { padding: 20px 16px 18px; }
+  .mic-stack-sm { width: 104px; height: 104px; }
+  .mic-btn-sm { width: 62px; height: 62px; }
+  .mic-btn-sm svg { width: 24px; height: 24px; }
+  .recorder-sm .timer { font-size: 1.2rem; }
+  .recorder-sm .transcript-live { min-height: 3.6rem; }
+  .rev-log { display: flex; flex-direction: column; gap: 6px; }
+  .rev-log li {
+    list-style: none; font-size: .88rem; color: var(--gray-700);
+    display: flex; gap: 9px; align-items: baseline;
+  }
+  .rev-log li::before { content: "\2192"; color: var(--berry-500); font-weight: 700; }
+
+  /* ---------------- check dialog ---------------- */
+  dialog.check {
+    border: none; border-radius: var(--radius-gentle); padding: 0;
+    max-width: 30rem; width: calc(100% - 32px);
+    background: var(--gray-0); color: var(--body-text);
+    box-shadow: 0 12px 48px rgba(36,56,76,.24);
+  }
+  dialog.check::backdrop { background: rgba(36,56,76,.42); }
+  dialog.check .dlg-body { padding: 26px 26px 20px; display: flex; flex-direction: column; gap: 12px; }
+  dialog.check h2 { font-size: 1.16rem; }
+  dialog.check p { color: var(--gray-600); }
+  dialog.check .dlg-foot {
+    padding: 14px 26px 20px; display: flex; gap: 10px;
+    justify-content: flex-end; flex-wrap: wrap;
+  }
+
+  /* ---------------- sidebar ---------------- */
+  .side { display: flex; flex-direction: column; gap: 18px; }
+  .side .card-body { gap: 12px; padding: 20px; }
+  .side h3 { font-size: .96rem; }
+  .side ul { margin: 0; padding-left: 1.15em; color: var(--gray-600); font-size: .93rem; display: flex; flex-direction: column; gap: 6px; }
+  .side p { font-size: .93rem; color: var(--gray-600); }
+  .side .card { border-top: 4px solid var(--sky); }
+
+  /* ---------------- footer ---------------- */
+  .cb-footer {
+    background: var(--indigo); color: #cbd5e0; padding-block: 26px; margin-top: 10px;
+  }
+  .cb-footer-inner {
+    max-width: 1100px; margin: 0 auto; padding-inline: 20px;
+    display: flex; gap: 14px; justify-content: space-between; flex-wrap: wrap;
+    font-size: .84rem;
+  }
+  .cb-footer strong { color: var(--gray-0); font-weight: 700; }
+</style>
+
+<header class="cb-header">
+  <div class="cb-header-inner">
+    <span class="wordmark">Caring<span>Bridge</span></span>
+    <nav class="cb-nav" aria-label="Site sections (inactive in this demo)">
+      <span>Visit a Site</span>
+      <span>Start a Site</span>
+      <span>Ways to Help</span>
+    </nav>
+    <span class="demo-pill">Demo — not the real CaringBridge</span>
+  </div>
+</header>
+
+<div class="site-band">
+  <div class="cover"></div>
+  <div class="site-head">
+    <span class="site-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1Z"></path>
+      </svg>
+    </span>
+    <div class="site-titles">
+      <h1>Your CaringBridge site</h1>
+      <p>Created today · 0 journal entries</p>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="Journal sections (inactive in this demo)">
+    <span class="on">Journal</span>
+    <span>Ways to Help</span>
+    <span>Photos</span>
+    <span>Well Wishes</span>
+    <span>About</span>
+  </nav>
+</div>
+
+<main class="cb-main">
+  <div>
+    <!-- STEP 1 -->
+    <section class="card" id="step-choose" aria-label="Write your first journal entry">
+      <div class="card-head">
+        <h2>Write your first journal entry</h2>
+        <span class="meta">Step 1 of 3</span>
+      </div>
+      <div class="card-body">
+        <nav class="rail" aria-label="Progress">
+          <span class="node" id="rail-1" data-state="active"><span class="dot"></span>Choose</span>
+          <span class="bar"></span>
+          <span class="node" id="rail-2"><span class="dot"></span>Speak</span>
+          <span class="bar"></span>
+          <span class="node" id="rail-3"><span class="dot"></span>Review</span>
+        </nav>
+        <p class="lede">This is the first thing your family and friends will read when they follow your site. Start it however is easiest for you.</p>
+        <div class="choices">
+          <button class="choice" id="pick-speak" type="button">
+            <span class="glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>
+              </svg>
+            </span>
+            <span>
+              <h3>Speak it out loud</h3>
+              <p>Say it the way you'd say it on the phone. Take as long as you need — the ums, the false starts and the doubling back all get cleaned up before you see the draft.</p>
+              <span class="tag">Microphone · then you edit it</span>
+            </span>
+          </button>
+          <button class="choice" id="pick-write" type="button">
+            <span class="glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path><path d="M14 6l4 4"></path>
+              </svg>
+            </span>
+            <span>
+              <h3>Write it myself</h3>
+              <p>Go straight to a blank entry. No microphone, no cleanup pass.</p>
+              <span class="tag">Straight to the editor</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="card" id="step-speak" aria-label="Record your first entry" hidden>
+      <div class="card-head">
+        <h2>Tell us about it</h2>
+        <span class="meta">Step 2 of 3</span>
+      </div>
+      <div class="card-body">
+        <nav class="rail" aria-label="Progress">
+          <span class="node" id="rail2-1" data-state="done"><span class="dot"></span>Choose</span>
+          <span class="bar"></span>
+          <span class="node" id="rail2-2" data-state="active"><span class="dot"></span>Speak</span>
+          <span class="bar"></span>
+          <span class="node" id="rail2-3"><span class="dot"></span>Review</span>
+        </nav>
+        <p class="lede">Press the microphone and just talk. Nothing is posted, and you'll see every word before anything happens.</p>
+
+        <div class="recorder">
+          <div class="mic-stack">
+            <div class="mic-ring" id="mic-ring"></div>
+            <button class="mic-btn" id="mic-btn" type="button" data-live="false" aria-label="Start recording">
+              <svg id="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="timer" id="timer">0:00</div>
+          <div class="status" id="status">Press to start speaking</div>
+          <div class="transcript-live" id="transcript-live"><span class="placeholder">Your words appear here as you talk.</span></div>
+        </div>
+
+        <div id="speech-fallback" hidden style="display:flex; flex-direction:column; gap:12px;">
+          <div class="notice warn" id="fallback-reason"></div>
+          <div class="row">
+            <button class="btn btn-outline" id="mic-test" type="button">Test the microphone</button>
+            <span class="count" id="mic-diag"></span>
+          </div>
+          <div>
+            <label class="field-label" for="fallback-text">Type what you would have said — fillers and all</label>
+            <textarea class="fallback" id="fallback-text" placeholder="Um, so, hi everybody. A lot of you have been texting and I just, I can't get back to everyone right now, so..."></textarea>
+          </div>
+        </div>
+
+        <div class="row-split">
+          <button class="btn btn-text" id="speak-back" type="button">Back</button>
+          <div class="row">
+            <button class="btn btn-outline" id="use-sample" type="button">Use a sample</button>
+            <button class="btn btn-primary" id="to-cleanup" type="button" disabled>Turn this into an entry</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="card" id="step-process" aria-label="Writing your entry" hidden>
+      <div class="card-head">
+        <h2>Taking out the ums</h2>
+        <span class="meta">One moment</span>
+      </div>
+      <div class="card-body">
+        <p class="lede">Keeping your words and everything you said. Dropping filler, false starts and repeated phrases.</p>
+        <div class="skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="card" id="step-edit" aria-label="Review and edit your entry" hidden>
+      <div class="card-head">
+        <h2>Your first journal entry</h2>
+        <span class="meta" id="edit-source">Draft</span>
+      </div>
+      <div class="card-body">
+        <nav class="rail" aria-label="Progress">
+          <span class="node" id="rail3-1" data-state="done"><span class="dot"></span>Choose</span>
+          <span class="bar"></span>
+          <span class="node" id="rail3-2" data-state="done"><span class="dot"></span>Speak</span>
+          <span class="bar"></span>
+          <span class="node" id="rail3-3" data-state="active"><span class="dot"></span>Review</span>
+        </nav>
+
+        <div class="cleanup-box" id="cleanup-notes" hidden>
+          <span class="label" id="notes-head">What was cleaned up</span>
+          <ul id="notes-list"></ul>
+        </div>
+
+        <div>
+          <label class="field-label" for="title-field">Entry title</label>
+          <input id="title-field" type="text" placeholder="Give your first entry a title">
+        </div>
+
+        <div>
+          <label class="field-label" for="body-field">Journal entry</label>
+          <div class="fake-toolbar" aria-hidden="true">
+            <b>B</b><i>I</i><u>U</u><span class="sep"></span><b>❝</b><b>•</b><b>🔗</b>
+          </div>
+          <textarea id="body-field" placeholder="Write your entry here."></textarea>
+        </div>
+
+        <details class="raw" id="raw-wrap" hidden>
+          <summary>See what you actually said</summary>
+          <p id="raw-text"></p>
+        </details>
+
+        <div class="revise">
+          <div class="row-split">
+            <div>
+              <span class="label">Change something</span>
+              <p class="blurb">Say what to add, cut or reword. Your instructions are applied to the entry above — they never appear in it.</p>
+            </div>
+            <button class="btn btn-outline" id="rev-toggle" type="button">Speak changes</button>
+          </div>
+
+          <div id="rev-panel" hidden>
+            <div class="recorder recorder-sm">
+              <div class="mic-stack mic-stack-sm">
+                <div class="mic-ring" id="rev-mic-ring"></div>
+                <button class="mic-btn mic-btn-sm" id="rev-mic-btn" type="button" data-live="false" aria-label="Start recording your changes">
+                  <svg id="rev-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="timer" id="rev-timer">0:00</div>
+              <div class="status" id="rev-status">Press and say what to change</div>
+              <div class="transcript-live" id="rev-live"><span class="placeholder">For example: add that the surgery is Thursday morning.</span></div>
+            </div>
+
+            <div id="rev-fallback" hidden style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+              <div class="notice warn" id="rev-fallback-reason"></div>
+              <div>
+                <label class="field-label" for="rev-text">Type what to change</label>
+                <textarea class="fallback" id="rev-text" placeholder="Add that the surgery is Thursday morning, and take out the part about the food."></textarea>
+              </div>
+            </div>
+
+            <div class="row-split" style="margin-top:14px">
+              <button class="btn btn-text" id="rev-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" id="rev-apply" type="button" disabled>Apply changes</button>
+            </div>
+          </div>
+
+          <div class="cleanup-box" id="rev-applied" hidden>
+            <span class="label">What changed</span>
+            <ul class="rev-log" id="rev-applied-list"></ul>
+          </div>
+        </div>
+
+        <div class="row-split">
+          <span class="count" id="count">0 words</span>
+          <div class="row">
+            <button class="btn btn-text" id="edit-restart" type="button">Start over</button>
+            <button class="btn btn-primary" id="post-btn" type="button">Publish entry</button>
+          </div>
+        </div>
+        <p style="font-size:.85rem; color:var(--gray-500)">Publishing is simulated here. Nothing leaves this page and no account is connected.</p>
+      </div>
+    </section>
+
+    <!-- STEP 5 -->
+    <section id="step-posted" aria-label="Your published entry" hidden>
+      <div class="ribbon">Simulated — this is how your first entry would appear</div>
+      <article class="card entry" style="border-radius:0 0 var(--radius-gentle) var(--radius-gentle)">
+        <div class="entry-byline">
+          <span class="entry-avatar" aria-hidden="true">YOU</span>
+          <span>
+            <span class="who">You</span><br>
+            <span class="when" id="receipt-date"></span>
+          </span>
+        </div>
+        <h2 id="receipt-title"></h2>
+        <div class="entry-body" id="receipt-body"></div>
+        <div class="entry-actions" aria-hidden="true">
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1Z"></path>
+            </svg>0 hearts</span>
+          <span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-4-.9L3 21l1.9-5a8.4 8.4 0 0 1-.9-4 8.5 8.5 0 0 1 8.5-8.5h.5a8.5 8.5 0 0 1 8 8Z"></path>
+            </svg>0 comments</span>
+        </div>
+      </article>
+      <div class="row-split" style="margin-top:18px">
+        <button class="btn btn-text" id="posted-restart" type="button">Write another</button>
+        <div class="row">
+          <button class="btn btn-outline" id="copy-btn" type="button">Copy text</button>
+          <button class="btn btn-outline" id="back-to-edit" type="button">Keep editing</button>
+        </div>
+      </div>
+      <p style="font-size:.85rem; color:var(--gray-500); margin-top:14px">Nothing was published. Copy the text and paste it into your real CaringBridge site when you're ready.</p>
+    </section>
+  </div>
+
+  <aside class="side">
+    <div class="card">
+      <div class="card-body">
+        <h3>What goes in a first entry</h3>
+        <ul>
+          <li>What's happened so far, in plain words.</li>
+          <li>Who you are, if some readers won't know.</li>
+          <li>How often you expect to post.</li>
+          <li>What would actually help right now.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>You're not being graded</h3>
+        <p>Short is fine. Two sentences is fine. People are here because they care about you, not because they're reading closely for style.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>About this page</h3>
+        <p>A working demo of a voice-first way to write a journal entry. It borrows CaringBridge's look, but it isn't CaringBridge and it doesn't connect to any account.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<dialog class="check" id="check-dialog" aria-labelledby="check-title">
+  <div class="dlg-body">
+    <h2 id="check-title">One thing to consider</h2>
+    <p id="check-text"></p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn btn-text" id="check-dismiss" type="button">Leave it as is</button>
+    <button class="btn btn-primary" id="check-edit" type="button">Let me add that</button>
+  </div>
+</dialog>
+
+<footer class="cb-footer">
+  <div class="cb-footer-inner">
+    <span><strong>Demo prototype.</strong> Not affiliated with, endorsed by, or connected to CaringBridge.</span>
+    <span>Nothing typed or spoken here is stored.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var steps = {
+    choose:  $("step-choose"),
+    speak:   $("step-speak"),
+    process: $("step-process"),
+    edit:    $("step-edit"),
+    posted:  $("step-posted")
+  };
+
+  var state = {
+    transcript: "", revision: "", active: null,
+    pendingSubmit: null, submitTimer: null,
+    recording: false, startedAt: 0,
+    timerId: null, rafId: null, stream: null, audioCtx: null, recognition: null
+  };
+
+  var MIC_GLYPH = '<rect x="9" y="2" width="6" height="12" rx="3"></rect>'
+    + '<path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>';
+  var STOP_GLYPH = '<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" stroke="none"></rect>';
+
+  // Speech is captured in two places: the first entry, and spoken revisions on
+  // the review step. One recorder drives both; a target says where it reads and
+  // writes, so neither copy can drift from the other.
+  var RECORDERS = {
+    compose: {
+      mic: "mic-btn", icon: "mic-icon", ring: "mic-ring",
+      timer: "timer", status: "status", live: "transcript-live",
+      fallbackBox: "speech-fallback", fallbackReason: "fallback-reason",
+      fallbackText: "fallback-text", diag: "mic-diag",
+      submit: "to-cleanup", minChars: 10,
+      placeholder: "Your words appear here as you talk.",
+      idle: "Press to start speaking",
+      listening: "Listening \u2014 press the square when you're done",
+      stopped: "Stopped \u2014 turn it into an entry, or keep going",
+      working: "Got it \u2014 writing your entry\u2026",
+      get: function () { return state.transcript; },
+      set: function (v) { state.transcript = v; }
+    },
+    revise: {
+      mic: "rev-mic-btn", icon: "rev-mic-icon", ring: "rev-mic-ring",
+      timer: "rev-timer", status: "rev-status", live: "rev-live",
+      fallbackBox: "rev-fallback", fallbackReason: "rev-fallback-reason",
+      fallbackText: "rev-text", diag: null,
+      submit: "rev-apply", minChars: 4,
+      placeholder: "For example: add that the surgery is Thursday morning.",
+      idle: "Press and say what to change",
+      listening: "Listening \u2014 press the square when you're done",
+      stopped: "Stopped \u2014 apply the change, or keep talking",
+      working: "Got it \u2014 applying your change\u2026",
+      get: function () { return state.revision; },
+      set: function (v) { state.revision = v; }
+    }
+  };
+
+  function targetOf(key) { return RECORDERS[key]; }
+  function usingFallback(key) { return !$(targetOf(key).fallbackBox).hidden; }
+
+  function spokenText(key) {
+    var t = targetOf(key);
+    return (usingFallback(key) ? $(t.fallbackText).value : t.get()).trim();
+  }
+
+  function refreshSubmit(key) {
+    var t = targetOf(key);
+    $(t.submit).disabled = spokenText(key).length < t.minChars;
+  }
+
+  // Pressing stop processes what was said - no second button press needed.
+  // Recognition usually delivers its last final result just before onend, so
+  // the submit waits for that; otherwise the tail of the sentence is lost.
+  function flushSubmit() {
+    var key = state.pendingSubmit;
+    if (!key) return;
+    state.pendingSubmit = null;
+    if (state.submitTimer) { clearTimeout(state.submitTimer); state.submitTimer = null; }
+
+    var t = targetOf(key);
+    if (!$(t.submit).disabled && spokenText(key).length >= t.minChars) $(t.submit).click();
+    else $(t.status).textContent = t.stopped;
+  }
+
+  function cancelPendingSubmit() {
+    state.pendingSubmit = null;
+    if (state.submitTimer) { clearTimeout(state.submitTimer); state.submitTimer = null; }
+  }
+
+  var SAMPLE = "Um, okay, so, hi everybody. A lot of you have been, uh, texting and calling and I really do appreciate it, I just, I can't get back to everyone individually right now, so, um, a few of us thought this would be, this would be easier. So this is where I'll be putting updates from now on. So basically, um, Mom went into the ER on Thursday night with, uh, with chest pain and they ended up admitting her. They ran a bunch of tests Friday and, uh, and Saturday, and yesterday the cardiologist told us that it's, it's a blockage, and she's going to need surgery, um, probably later this week once, once her other numbers come down a little. She's, she's honestly in pretty good spirits, she's already complaining about the food, so, you know, that's a good sign I think. Um. I'll try to post something every couple of days, even if there's, if there's nothing really new to say. And please don't feel like you have to, uh, respond to every one of these. Just knowing that people are reading is, is really enough. Thank you, all of you, seriously.";
+
+  function setStep(name) {
+    Object.keys(steps).forEach(function (k) { steps[k].hidden = (k !== name); });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /* ---------------- step 1 ---------------- */
+
+  $("pick-write").addEventListener("click", function () {
+    state.transcript = "";
+    $("edit-source").textContent = "Draft";
+    $("raw-wrap").hidden = true;
+    $("cleanup-notes").hidden = true;
+    $("title-field").value = "";
+    $("body-field").value = "";
+    setStep("edit");
+    autosize(); updateCount();
+    $("title-field").focus();
+  });
+
+  $("pick-speak").addEventListener("click", function () {
+    setStep("speak");
+    if (!SR) {
+      showFallback("compose", "This browser doesn't have built-in speech recognition — Chrome and Edge do. You can still run the whole flow by typing below.");
+    } else if (embedAllowsMic() === false) {
+      showFallback("compose", "The page this demo is embedded in doesn't hand microphone access through to it. That's set by the embedding page, so granting mic permission in your browser and reloading won't change it. To use your voice, run this page on its own (see below). To see the rest of the flow right now, type or load the sample.");
+    }
+  });
+
+  $("speak-back").addEventListener("click", function () { stopRecording(); setStep("choose"); });
+
+  /* ---------------- step 2: speech ---------------- */
+
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  function embedAllowsMic() {
+    try {
+      if (document.featurePolicy && document.featurePolicy.allowsFeature) {
+        return document.featurePolicy.allowsFeature("microphone");
+      }
+    } catch (e) { /* not supported in this browser */ }
+    return null; // unknown
+  }
+
+  function micDiagnosis() {
+    var bits = [];
+    var allowed = embedAllowsMic();
+    bits.push("embed grants mic: " + (allowed === null ? "unknown" : allowed));
+    bits.push("in a frame: " + (window.self !== window.top));
+    bits.push("secure context: " + window.isSecureContext);
+    return bits.join("  ·  ");
+  }
+
+  function showFallback(key, reason) {
+    var t = targetOf(key);
+    $(t.fallbackReason).textContent = reason;
+    if (t.diag) $(t.diag).textContent = micDiagnosis();
+    $(t.fallbackBox).hidden = false;
+    $(t.mic).disabled = true;
+    $(t.mic).style.opacity = ".4";
+    $(t.mic).style.cursor = "not-allowed";
+    $(t.status).textContent = "Microphone unavailable";
+    $(t.fallbackText).addEventListener("input", function () { refreshSubmit(key); });
+  }
+
+  function fmtTime(ms) {
+    var s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function renderLive(key, interim) {
+    var t = targetOf(key);
+    var box = $(t.live);
+    var finalText = t.get().trim();
+    if (!finalText && !interim) {
+      box.textContent = "";
+      var ph = document.createElement("span");
+      ph.className = "placeholder";
+      ph.textContent = t.placeholder;
+      box.appendChild(ph);
+      return;
+    }
+    box.textContent = finalText ? finalText + " " : "";
+    if (interim) {
+      var span = document.createElement("span");
+      span.className = "interim";
+      span.textContent = interim;
+      box.appendChild(span);
+    }
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function startMeter(key, stream) {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      state.audioCtx = new Ctx();
+      var analyser = state.audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      state.audioCtx.createMediaStreamSource(stream).connect(analyser);
+      var data = new Uint8Array(analyser.frequencyBinCount);
+      var ring = $(targetOf(key).ring);
+      var smooth = 0.6;
+      (function tick() {
+        analyser.getByteTimeDomainData(data);
+        var peak = 0;
+        for (var i = 0; i < data.length; i++) {
+          var v = Math.abs(data[i] - 128) / 128;
+          if (v > peak) peak = v;
+        }
+        smooth += ((0.6 + Math.min(peak * 2.2, 1) * 0.4) - smooth) * 0.35;
+        ring.style.transform = "scale(" + smooth.toFixed(3) + ")";
+        state.rafId = requestAnimationFrame(tick);
+      })();
+    } catch (e) { /* the meter is decoration; recording continues without it */ }
+  }
+
+  function startRecording(key) {
+    if (!SR) return;
+    var t = targetOf(key);
+    var rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = navigator.language || "en-US";
+
+    rec.onresult = function (ev) {
+      var interim = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) t.set(t.get() + ev.results[i][0].transcript + " ");
+        else interim += ev.results[i][0].transcript;
+      }
+      renderLive(key, interim);
+      refreshSubmit(key);
+    };
+
+    rec.onerror = function (ev) {
+      if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+        stopRecording();
+        showFallback(key, embedAllowsMic() === false
+          ? "The page this demo is embedded in doesn't hand microphone access through to it. That's set by the embedding page, so browser permissions and reloading won't change it. Run the page on its own to use your voice, or type below."
+          : "The microphone was blocked. If you never saw a permission prompt, the page it's embedded in is withholding mic access and your browser settings can't override that. Type what you want below instead.");
+      } else if (ev.error === "audio-capture") {
+        stopRecording();
+        showFallback(key, "No microphone was found on this device. You can type it below instead.");
+      } else if (ev.error === "no-speech") {
+        $(t.status).textContent = "Didn't catch that — keep talking";
+      }
+    };
+
+    rec.onend = function () {
+      if (state.recording) { try { rec.start(); } catch (e) { /* already restarting */ } }
+      else flushSubmit();
+    };
+
+    try { rec.start(); }
+    catch (e) {
+      showFallback(key, "Speech recognition wouldn't start in this browser. You can type it below instead.");
+      return;
+    }
+
+    cancelPendingSubmit();
+    state.recognition = rec;
+    state.recording = true;
+    state.active = key;
+    state.startedAt = Date.now();
+
+    $(t.mic).dataset.live = "true";
+    $(t.mic).setAttribute("aria-label", "Stop recording");
+    $(t.icon).innerHTML = STOP_GLYPH;
+    $(t.ring).classList.add("live");
+    $(t.status).textContent = t.listening;
+
+    state.timerId = setInterval(function () {
+      $(t.timer).textContent = fmtTime(Date.now() - state.startedAt);
+    }, 250);
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        state.stream = stream;
+        if (state.active === key) startMeter(key, stream);
+        else stream.getTracks().forEach(function (tr) { tr.stop(); });
+      }).catch(function () { /* recognition may still work without a second stream */ });
+    }
+  }
+
+  function stopRecording(opts) {
+    var key = state.active;
+    var wantSubmit = !!(opts && opts.submit) && !!key;
+    var rec = state.recognition;
+
+    // Detach before stopping. stop() can deliver the last final result and fire
+    // onend synchronously, and the submit that follows re-enters this function;
+    // clearing these first keeps that from stopping the recognizer twice.
+    state.recognition = null;
+    state.active = null;
+    state.recording = false;
+
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+    if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
+    if (state.stream) { state.stream.getTracks().forEach(function (tr) { tr.stop(); }); state.stream = null; }
+    if (state.audioCtx) { try { state.audioCtx.close(); } catch (e) {} state.audioCtx = null; }
+
+    if (key) {
+      var t = targetOf(key);
+      $(t.mic).dataset.live = "false";
+      $(t.mic).setAttribute("aria-label", "Start recording");
+      $(t.icon).innerHTML = MIC_GLYPH;
+      $(t.ring).classList.remove("live");
+      $(t.ring).style.transform = "scale(.6)";
+
+      if (wantSubmit) {
+        // Arm before stop(): onend may fire inside it. Arm unconditionally too,
+        // since the last final result often lands after stop() returns, so
+        // whether enough was said is only knowable in flushSubmit.
+        state.pendingSubmit = key;
+        $(t.status).textContent = t.working;
+        // Backstop for engines that never fire onend after stop().
+        state.submitTimer = setTimeout(flushSubmit, 1500);
+      } else {
+        cancelPendingSubmit();
+        if (t.get().trim()) $(t.status).textContent = t.stopped;
+      }
+    } else if (!wantSubmit) {
+      cancelPendingSubmit();
+    }
+
+    if (rec) { try { rec.stop(); } catch (e) { /* already stopped */ } }
+  }
+
+  function bindMic(key) {
+    $(targetOf(key).mic).addEventListener("click", function () {
+      if (state.recording && state.active === key) stopRecording({ submit: true });
+      else { stopRecording(); startRecording(key); }
+    });
+  }
+  bindMic("compose");
+  bindMic("revise");
+
+  $("mic-test").addEventListener("click", function () {
+    var out = $("mic-diag");
+    out.textContent = "Testing\u2026";
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      out.textContent = "getUserMedia missing  ·  " + micDiagnosis();
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      out.textContent = "Microphone opened fine \u2014 so the block is in speech recognition, not the mic  ·  " + micDiagnosis();
+    }).catch(function (err) {
+      out.textContent = err.name + ": " + (err.message || "no detail") + "  ·  " + micDiagnosis();
+    });
+  });
+
+  $("use-sample").addEventListener("click", function () {
+    stopRecording();
+    if (usingFallback("compose")) {
+      $("fallback-text").value = SAMPLE;
+    } else {
+      state.transcript = SAMPLE;
+      renderLive("compose", "");
+      $("timer").textContent = "1:24";
+      $("status").textContent = "Sample loaded";
+    }
+    refreshSubmit("compose");
+  });
+
+  /* ---------------- step 3: cleanup ---------------- */
+
+  var samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample") : Promise.resolve(null);
+
+  $("to-cleanup").addEventListener("click", function () {
+    stopRecording();
+    var raw = spokenText("compose");
+    if (raw.length < 10) return;
+    state.transcript = raw;
+    setStep("process");
+    cleanUp(raw);
+  });
+
+  var INSTRUCTIONS = [
+    "You are helping someone write the FIRST journal entry on a CaringBridge site they just created.",
+    "Their family and friends have just been given the link, so this entry is what introduces the situation.",
+    "Below is a raw voice transcript. Turn it into the entry they meant to write.",
+    "",
+    "Rules:",
+    "- Remove filler words (um, uh, like, you know, I mean), false starts, repeated phrases and self-corrections. Keep the corrected version.",
+    "- Keep their voice: same warmth, same plain wording, first person. Do not make it formal or clinical.",
+    "- Invent nothing. Every fact, name, number and date must come from the transcript. If something was unclear, leave it out rather than guessing.",
+    "- Do not add a greeting, a sign-off, or a call to visit that they did not say.",
+    "- Fix obvious transcription slips and punctuation. Break it into short paragraphs.",
+    "- Write a title of 6 words or fewer, drawn from what they actually said.",
+    "",
+    "Also report two checks on the finished entry. These never change the entry itself:",
+    "- mentions_person: true only if the entry makes clear WHOSE health or situation this site is about: a name, a relationship (Mom, my husband), or the writer explicitly saying it is about their own health or situation. First-person narration alone is not enough - \"I am tired\" does not say who the site is about.",
+    "- mentions_needs: true if it says anything about what would help, what anyone needs, or what readers can do - including telling them they need not do anything.",
+    "",
+    'Return JSON only: {"title": string, "body": string with \\n\\n between paragraphs, "notes": array of 2-4 short strings describing what you cleaned up, each under 9 words, "mentions_person": boolean, "mentions_needs": boolean}',
+    "",
+    "Transcript:",
+    ""
+  ].join("\n");
+
+  // Three ways to reach Claude, in order: the artifact's sample capability,
+  // a local proxy at /api/cleanup, then an on-device regex as the last resort.
+  function viaLocalServer(raw) {
+    return fetch("/api/cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: raw })
+    }).then(function (res) {
+      return res.json().catch(function () {
+        throw { message: "The local server returned HTTP " + res.status + " and no JSON." };
+      }).then(function (data) {
+        if (!res.ok) throw { message: data.error || ("The local server returned HTTP " + res.status + ".") };
+        return { entry: data, source: "Cleaned up by Claude (local server)" };
+      });
+    });
+  }
+
+  function cleanUp(raw) {
+    samplePromise.then(function (sample) {
+      if (!sample) return viaLocalServer(raw);
+      return sample.json(INSTRUCTIONS + raw, { modelTier: "default" }).then(function (entry) {
+        return { entry: entry, source: "Cleaned up by Claude" };
+      });
+    }).then(function (out) {
+      showDraft(out.entry.title, out.entry.body, out.entry.notes, out.source, out.entry);
+    }).catch(function (err) {
+      var local = localClean(raw);
+      var why;
+      if (err && err.code === "rate_limited") why = "Claude was rate-limited — cleaned up on-device instead";
+      else if (err && err.message) why = err.message + " Cleaned up on-device instead.";
+      else why = "Claude wasn't reachable — cleaned up on-device instead";
+      showDraft(local.title, local.body, [why].concat(local.notes), "Cleaned up on-device");
+    });
+  }
+
+  var FILLERS = /\b(um+|uh+|erm?|ah+|like|you know|i mean|sort of|kind of|basically|literally|actually|honestly|i guess|i think|so yeah)\b[,]?\s*/gi;
+
+  function localClean(raw) {
+    var before = raw.split(/\s+/).length;
+    var text = raw
+      .replace(/\b(\w+)([ ,—-]+)\1\b/gi, "$1")
+      .replace(FILLERS, "")
+      .replace(/\s*—\s*/g, " ")
+      .replace(/\s*,\s*,\s*/g, ", ")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
+      .trim();
+    text = text.replace(/(^|[.!?]\s+)([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); });
+    var sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    var paras = [];
+    for (var i = 0; i < sentences.length; i += 3) paras.push(sentences.slice(i, i + 3).join(" ").trim());
+    var removed = Math.max(before - text.split(/\s+/).length, 0);
+    var first = (sentences[0] || text).replace(/[.!?]+$/, "").split(/\s+/).slice(0, 6).join(" ");
+    return {
+      title: first.charAt(0).toUpperCase() + first.slice(1),
+      body: paras.join("\n\n"),
+      notes: ["Removed about " + removed + " filler words", "Split into " + paras.length + " paragraphs"]
+    };
+  }
+
+  function showDraft(title, body, notes, source, entry) {
+    $("title-field").value = title || "";
+    $("body-field").value = body || "";
+    $("edit-source").textContent = source;
+
+    var list = $("notes-list");
+    list.textContent = "";
+    (notes || []).forEach(function (n) {
+      var li = document.createElement("li");
+      li.textContent = String(n);
+      list.appendChild(li);
+    });
+    $("cleanup-notes").hidden = !(notes && notes.length);
+
+    $("raw-text").textContent = state.transcript;
+    $("raw-wrap").hidden = false;
+
+    setStep("edit");
+    autosize(); updateCount();
+    flagMissingSubject(entry);
+  }
+
+  // The model reports only two booleans; the wording here is fixed so this
+  // dialog can never drift onto feedback the user didn't ask for. It stays out
+  // of the draft entirely.
+  function flagMissingSubject(entry) {
+    if (!entry) return;
+    var noPerson = entry.mentions_person === false;
+    var noNeeds = entry.mentions_needs === false;
+    if (!noPerson && !noNeeds) return;
+
+    var text;
+    if (noPerson && noNeeds) {
+      text = "This entry doesn't yet say who it's about, or what would help right now. People who have just been given your link are usually looking for both.";
+    } else if (noPerson) {
+      text = "This entry doesn't yet say who it's about. People who have just been given your link won't know who to ask after.";
+    } else {
+      text = "This entry doesn't yet say what would help right now. People reading this usually want to know what they can do.";
+    }
+
+    $("check-text").textContent = text;
+    var dlg = $("check-dialog");
+    if (typeof dlg.showModal === "function") dlg.showModal();
+  }
+
+  /* ---------------- step 4: editor ---------------- */
+
+  function autosize() {
+    var ta = $("body-field");
+    ta.style.height = "auto";
+    ta.style.height = Math.max(ta.scrollHeight, 208) + "px";
+  }
+
+  function updateCount() {
+    var words = $("body-field").value.trim().split(/\s+/).filter(Boolean).length;
+    $("count").textContent = words + (words === 1 ? " word" : " words");
+    $("post-btn").disabled = words === 0;
+  }
+
+  $("body-field").addEventListener("input", function () { autosize(); updateCount(); });
+  $("edit-restart").addEventListener("click", resetAll);
+
+  $("post-btn").addEventListener("click", function () {
+    var btn = $("post-btn");
+    btn.disabled = true;
+    btn.textContent = "Publishing…";
+    setTimeout(function () {
+      btn.textContent = "Publish entry";
+      btn.disabled = false;
+      renderEntry();
+      setStep("posted");
+    }, 900);
+  });
+
+  /* ---------------- step 5 ---------------- */
+
+  function renderEntry() {
+    $("receipt-date").textContent = new Date().toLocaleDateString(undefined, {
+      weekday: "long", month: "long", day: "numeric", year: "numeric"
+    });
+    $("receipt-title").textContent = $("title-field").value.trim() || "Untitled entry";
+    var body = $("receipt-body");
+    body.textContent = "";
+    $("body-field").value.split(/\n{2,}/).forEach(function (para) {
+      if (!para.trim()) return;
+      var p = document.createElement("p");
+      p.textContent = para.trim();
+      body.appendChild(p);
+    });
+  }
+
+  /* ---------------- spoken revisions ---------------- */
+
+  var REVISE_INSTRUCTIONS = [
+    "You are revising one CaringBridge journal entry on its author's behalf.",
+    "You are given the current title and entry, and a spoken instruction from the author.",
+    "",
+    "Rules:",
+    "- The instruction was dictated, so ignore its filler words and read through to what was asked.",
+    "- Apply only what was asked. Leave every other sentence exactly as it is, word for word.",
+    "- Never treat the instruction as text to insert. It is a direction, not content.",
+    "- Invent nothing. If the instruction asks you to add a fact, use the author's own words for it and nothing more.",
+    "- Keep their voice and first person. Keep paragraphs separated by a blank line.",
+    "- If the instruction is unclear, make the smallest change that honours it.",
+    "- title: keep the existing title unless the instruction asks for a change, or the change makes it wrong.",
+    "- notes: 1 to 3 short strings saying what you changed, each under 9 words.",
+    "",
+    "Also report the same two checks on the revised entry. These never change the entry itself:",
+    "- mentions_person: true only if the entry makes clear WHOSE health or situation this site is about: a name, a relationship (Mom, my husband), or the writer explicitly saying it is about their own health or situation. First-person narration alone is not enough.",
+    "- mentions_needs: true if it says anything about what would help, what anyone needs, or what readers can do - including telling them they need not do anything.",
+    "",
+    'Return JSON only: {"title": string, "body": string, "notes": array of strings, "mentions_person": boolean, "mentions_needs": boolean}',
+    ""
+  ].join("\n");
+
+  function revisionPrompt(instruction) {
+    return REVISE_INSTRUCTIONS
+      + "\nCurrent title:\n" + $("title-field").value
+      + "\n\nCurrent entry:\n" + $("body-field").value
+      + "\n\nSpoken instruction:\n" + instruction + "\n";
+  }
+
+  function reviseViaServer(instruction) {
+    return fetch("/api/revise", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: $("title-field").value,
+        body: $("body-field").value,
+        instruction: instruction
+      })
+    }).then(function (res) {
+      return res.json().catch(function () {
+        throw { message: "The local server returned HTTP " + res.status + " and no JSON." };
+      }).then(function (data) {
+        if (!res.ok) throw { message: data.error || ("The local server returned HTTP " + res.status + ".") };
+        return data;
+      });
+    });
+  }
+
+  function closeRevisePanel() {
+    stopRecording();
+    state.revision = "";
+    $("rev-text").value = "";
+    $("rev-timer").textContent = "0:00";
+    $("rev-status").textContent = targetOf("revise").idle;
+    renderLive("revise", "");
+    refreshSubmit("revise");
+    $("rev-panel").hidden = true;
+    $("rev-toggle").textContent = "Speak changes";
+  }
+
+  $("rev-toggle").addEventListener("click", function () {
+    if (!$("rev-panel").hidden) { closeRevisePanel(); return; }
+    $("rev-panel").hidden = false;
+    $("rev-toggle").textContent = "Close";
+    if (!SR) {
+      showFallback("revise", "This browser doesn't have built-in speech recognition — Chrome and Edge do. Type your changes instead.");
+    } else if (embedAllowsMic() === false) {
+      showFallback("revise", "The page this demo is embedded in doesn't hand microphone access through to it. Run the page on its own to speak, or type your changes below.");
+    }
+  });
+
+  $("rev-cancel").addEventListener("click", closeRevisePanel);
+
+  $("rev-apply").addEventListener("click", function () {
+    stopRecording();
+    var instruction = spokenText("revise");
+    if (instruction.length < 4) return;
+
+    var btn = $("rev-apply");
+    btn.disabled = true;
+    btn.textContent = "Applying\u2026";
+
+    var done = function (entry, failure) {
+      btn.textContent = "Apply changes";
+      if (failure) {
+        $("rev-fallback-reason").textContent = failure;
+        $("rev-fallback").hidden = false;
+        btn.disabled = false;
+        return;
+      }
+      $("title-field").value = entry.title || $("title-field").value;
+      $("body-field").value = entry.body || $("body-field").value;
+      autosize(); updateCount();
+
+      var list = $("rev-applied-list");
+      list.textContent = "";
+      (entry.notes || []).forEach(function (n) {
+        var li = document.createElement("li");
+        li.textContent = String(n);
+        list.appendChild(li);
+      });
+      $("rev-applied").hidden = !(entry.notes && entry.notes.length);
+
+      closeRevisePanel();
+      flagMissingSubject(entry);
+    };
+
+    samplePromise.then(function (sample) {
+      if (!sample) return reviseViaServer(instruction);
+      return sample.json(revisionPrompt(instruction), { modelTier: "default" });
+    }).then(function (entry) {
+      done(entry, null);
+    }).catch(function (err) {
+      done(null, (err && err.message)
+        ? err.message + " Your entry is unchanged."
+        : "Couldn't reach Claude to apply that change. Your entry is unchanged.");
+    });
+  });
+
+  $("check-dismiss").addEventListener("click", function () { $("check-dialog").close(); });
+  $("check-edit").addEventListener("click", function () {
+    $("check-dialog").close();
+    var ta = $("body-field");
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  });
+
+  $("back-to-edit").addEventListener("click", function () { setStep("edit"); autosize(); });
+  $("posted-restart").addEventListener("click", resetAll);
+
+  $("copy-btn").addEventListener("click", function () {
+    var text = ($("title-field").value.trim() + "\n\n" + $("body-field").value.trim()).trim();
+    var btn = $("copy-btn");
+    var done = function (ok) {
+      btn.textContent = ok ? "Copied" : "Copy failed";
+      setTimeout(function () { btn.textContent = "Copy text"; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else { done(false); }
+  });
+
+  function resetAll() {
+    stopRecording();
+    state.transcript = "";
+    $("title-field").value = "";
+    $("body-field").value = "";
+    $("fallback-text").value = "";
+    $("timer").textContent = "0:00";
+    $("status").textContent = "Press to start speaking";
+    $("to-cleanup").disabled = true;
+    $("cleanup-notes").hidden = true;
+    $("raw-wrap").hidden = true;
+    renderLive("compose", "");
+    closeRevisePanel();
+    $("rev-applied").hidden = true;
+    updateCount();
+    setStep("choose");
+  }
+
+  updateCount();
+})();
+</script>
