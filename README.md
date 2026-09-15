@@ -15,10 +15,10 @@ is connected, and the page carries a demo marker and a disclaimer.
 | File | Role |
 |---|---|
 | `composer.html` | The whole app — markup, CSS, speech capture, Claude call. **Source of truth; edit this.** |
-| `server.py` | Local host, and the `/api/cleanup` + `/api/revise` proxies to the Anthropic API. |
+| `server.py` | Local host, and the `/api/cleanup`, `/api/revise` and `/api/adjust` proxies to the Anthropic API. |
 | `build.py` | Wraps `composer.html` into a complete document at `serve/index.html`. |
 | `reload.sh` | Rebuild and restart in one step. |
-| `test_recorder.js` | Headless check of the recorder state machine (no browser, no mic). |
+| `test_recorder.js` | Headless check of the recorder state machine and the adjust-the-draft controls (no browser, no mic). |
 | `Caddyfile.example` | Optional TLS front end. |
 | `CLAUDE.md` | Orientation for Claude Code sessions working on this directory. |
 | `serve/index.html` | Generated. Do not edit — `build.py` overwrites it. |
@@ -174,6 +174,34 @@ target name to its element ids, prompts and buffer, so the mic, level ring,
 timer, live transcript and typed fallback behave identically in both places and
 cannot drift apart.
 
+## Adjusting the draft
+
+Below the editor, **Adjust the draft** has three sliders, each 1–5 with the
+middle position meaning "as it is now":
+
+- **Length** — just the essentials … everything I said. Anything above the
+  middle may only bring back detail from the raw transcript; on the
+  "Write it myself" path there is no transcript, so the entry cannot grow.
+- **Emotion** — just the facts … openly heartfelt. Only feelings the writer
+  actually expressed are foregrounded or softened; none are added.
+- **Wording** — reworded for flow … my exact words. How closely the writer's own
+  phrasing is kept.
+
+**Suggest changes** sends the current title and entry, the transcript and the
+three positions to `POST /api/adjust` (or the artifact `sample` capability) and
+gets back one rewrite. Nothing is applied yet: the entry box switches to a
+tracked-changes view — removed words struck through, added words highlighted —
+with the model's notes underneath and two buttons, **Use this version** and
+**Keep what I have**. Accepting writes the text into the editor and logs the
+notes in "What changed"; keeping restores the editor untouched. Publish and
+Speak changes are disabled while a suggestion is waiting for a decision.
+
+The slider positions are integers on the wire; `server.py` maps each to a
+sentence in `LEVELS`, and `composer.html` carries the same table for the
+artifact path and the captions. The settings are directions, never content, and
+the diff view is built with `textContent` only, so nothing typed, spoken or
+generated reaches `innerHTML`.
+
 ## Testing the recorder
 
 The speech path is the easiest thing here to break and the most tedious to check
@@ -181,11 +209,13 @@ by hand. `test_recorder.js` stubs enough DOM and `SpeechRecognition` to drive
 both recorders headlessly:
 
 ```sh
+sed -n '/^<script>$/,/^<\/script>$/p' composer.html | sed '1d;$d' > /tmp/composer-check.js
 /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc test_recorder.js
+node test_recorder.js      # same thing on a machine where node works
 ```
 
-It runs against the JS extracted from `composer.html`, so it exercises the
-shipped code rather than a copy, and it seeds each stub element's `hidden` /
+It runs against the JS extracted from `composer.html` (the `sed` line), so it
+exercises the shipped code rather than a copy, and it seeds each stub element's `hidden` /
 `disabled` state from the real markup — without that the stubs all start visible
 and enabled, which produces false failures.
 

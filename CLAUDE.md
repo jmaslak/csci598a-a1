@@ -18,10 +18,12 @@ build; never edit it.
 Test the recorder headlessly after touching any speech code:
 
 ```sh
+sed -n '/^<script>$/,/^<\/script>$/p' composer.html | sed '1d;$d' > /tmp/composer-check.js
 /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc test_recorder.js
 ```
 
-`node` is broken on this machine (missing `libllhttp` dylib) — use `jsc`.
+`node test_recorder.js` runs the same file where node works. `node` is broken
+on the original Mac (missing `libllhttp` dylib) — use `jsc` there.
 
 The server requires Basic auth, so manual checks need credentials:
 
@@ -33,7 +35,8 @@ curl -u csci598a:csci598a http://127.0.0.1:8777/
 
 `composer.html` is published as-is to a Claude Artifact **and** served locally.
 `cleanUp()` and the revision path both try, in order: the artifact `sample`
-capability → `POST /api/cleanup` (or `/api/revise`) → an on-device regex.
+capability → `POST /api/cleanup` (or `/api/revise`) → an on-device regex. The
+adjust path tries the first two and shows an error instead of a regex fallback.
 Changes must keep working in both. The artifact lives at a fixed URL — republish
 to that same URL rather than creating a new one.
 
@@ -65,6 +68,17 @@ Things that look arbitrary and are not:
   not say whose site this is. Loosening this makes the check always pass.
 - **Basic auth fails closed.** Missing `BASIC_AUTH_USER`/`BASIC_AUTH_PASS` exits
   rather than serving unprotected.
+- **Slider positions are integers 1–5, mapped to sentences by `LEVELS`.**
+  `server.py` and `composer.html` each carry the table (server for `/api/adjust`,
+  page for the artifact path and the captions); change both or the two routes
+  drift. Like a spoken instruction, the settings are directions, never content.
+- **A suggestion is never applied on arrival.** `showSuggestion()` renders a
+  diff in `#body-diff` and hides `#body-field`; only `#suggest-use` writes to
+  the fields. The diff is built with `createElement`/`textContent` — keep user
+  and model text away from `innerHTML`.
+- **`[hidden] { display: none !important }` is load-bearing.** `#body-field`
+  sets `display: block` and the fallback boxes set inline `display: flex`;
+  without the global rule the `hidden` attribute does nothing on them.
 
 ## Copy rules
 
@@ -79,8 +93,8 @@ Things that look arbitrary and are not:
 ## Anthropic API
 
 `server.py` calls `claude-opus-5` through `messages.parse()` with the Pydantic
-`Entry` model, effort `low`. `_parse()` backs both endpoints and the `CHECKS`
-string is shared by both prompts so they cannot disagree. Transcripts are not
+`Entry` model, effort `low`. `_parse()` backs all three endpoints and the
+`CHECKS` string is appended to all three prompts so they cannot disagree. Transcripts are not
 written to disk and request logging omits bodies.
 
 ## Secrets

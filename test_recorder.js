@@ -1,9 +1,20 @@
-// Headless check of composer.html's recorder state machine.
+// Headless check of composer.html's recorder state machine and the
+// adjust-the-draft controls.
 //
+//   sed -n '/^<script>$/,/^<\/script>$/p' composer.html | sed '1d;$d' > /tmp/composer-check.js
 //   /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc test_recorder.js
+//   node test_recorder.js        # same thing where node works
 //
 // Stubs just enough DOM and SpeechRecognition to drive both recorders without a
 // browser or a microphone, then asserts what reached the page.
+
+// jsc has print/readFile built in; give node the same two.
+if (typeof print === "undefined") {
+    var print = function (s) { console.log(s); };
+}
+if (typeof readFile === "undefined") {
+    var readFile = function (path) { return require("fs").readFileSync(path, "utf8"); };
+}
 
 var failures = 0;
 function check(label, got, want) {
@@ -103,7 +114,8 @@ var navigator = { language: "en-US" };
 var window = {
     SpeechRecognition: FakeSR,
     scrollTo: function () {},
-    AudioContext: null
+    AudioContext: null,
+    __composerTest: true    // asks the page to expose pure helpers for the checks below
 };
 
 // ---------- seed initial attribute state from the real markup ----------
@@ -162,5 +174,43 @@ $("rev-mic-btn").click();
 check("revise: tail after stop() captured",
       $("rev-live").textContent.indexOf("take out the food part") >= 0, true);
 check("revise: auto-applied on stop", applied, true);
+
+print("adjust the draft");
+
+// --- sliders: captions follow the position ---
+check("adjust: captions start at 'as it is now'", $("adj-length-out").textContent, "As it is now");
+$("adj-length").value = "1";
+$("adj-length").fire("input");
+check("adjust: length caption at 1", $("adj-length-out").textContent, "Just the essentials");
+$("adj-emotion").value = "5";
+$("adj-emotion").fire("input");
+check("adjust: emotion caption at 5", $("adj-emotion-out").textContent, "Openly heartfelt");
+
+// --- suggest: too short refuses, long enough asks Claude (fetch never resolves here) ---
+$("body-field").value = "Hi.";
+$("adj-suggest").click();
+check("adjust: refuses a too-short entry", $("adj-error").hidden, false);
+check("adjust: button untouched when refused", $("adj-suggest").disabled, false);
+
+$("body-field").value = "Mom went into the ER on Thursday night with chest pain.";
+$("adj-suggest").click();
+check("adjust: error cleared on retry", $("adj-error").hidden, true);
+check("adjust: button disabled while asking", $("adj-suggest").disabled, true);
+check("adjust: button says it is asking", $("adj-suggest").textContent, "Asking Claude\u2026");
+check("adjust: textarea stays visible while asking", $("body-field").hidden, false);
+
+// --- word diff: the pure helper behind the tracked-changes view ---
+var hooks = window.__composerTestHooks;
+check("diff: hooks exposed", typeof (hooks && hooks.wordDiff), "function");
+function flat(ops) {
+    return ops.map(function (o) { return o.op + ":" + o.tokens.join("_"); }).join(" ");
+}
+check("diff: one word swapped", flat(hooks.wordDiff("a b c", "a x c")), "eq:a del:b ins:x eq:c");
+check("diff: identical paragraphs are one eq run",
+      flat(hooks.wordDiff("p1\n\np2", "p1\n\np2")), "eq:p1_\n\n_p2");
+check("diff: whitespace differences are not changes",
+      flat(hooks.wordDiff("a  b\nc", "a b c")), "eq:a_b_c");
+check("diff: words dropped at the end", flat(hooks.wordDiff("a b c d", "a b")), "eq:a_b del:c_d");
+check("diff: empty before, text after", flat(hooks.wordDiff("", "a b")), "ins:a_b");
 
 print(failures ? "\n" + failures + " FAILED" : "\nall passed");
