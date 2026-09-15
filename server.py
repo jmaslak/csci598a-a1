@@ -88,6 +88,12 @@ class Entry(BaseModel):
     mentions_needs: bool
 
 
+# Shared by all three prompts so they cannot disagree about the checks.
+CHECKS = """
+Also report two checks on the entry. These never change the entry itself:
+- mentions_person: true only if the entry makes clear WHOSE health or situation this site is about: a name, a relationship (Mom, my husband), or the writer explicitly saying it is about their own health or situation. First-person narration alone is not enough - "I am tired" does not say who the site is about.
+- mentions_needs: true if it says anything about what would help, what anyone needs, or what readers can do - including telling them they need not do anything."""
+
 SYSTEM = """You are helping someone write the FIRST journal entry on a CaringBridge site they just created.
 Their family and friends have just been given the link, so this entry is what introduces the situation.
 The user message is a raw voice transcript. Turn it into the entry they meant to write.
@@ -99,12 +105,7 @@ Rules:
 - Do not add a greeting, a sign-off, or a call to visit that they did not say.
 - Fix obvious transcription slips and punctuation. Break it into short paragraphs, separated by a blank line.
 - title: 6 words or fewer, drawn from what they actually said.
-- notes: 2 to 4 short strings describing what you cleaned up, each under 9 words."""
-
-CHECKS = """
-Also report two checks on the entry. These never change the entry itself:
-- mentions_person: true only if the entry makes clear WHOSE health or situation this site is about: a name, a relationship (Mom, my husband), or the writer explicitly saying it is about their own health or situation. First-person narration alone is not enough - "I am tired" does not say who the site is about.
-- mentions_needs: true if it says anything about what would help, what anyone needs, or what readers can do - including telling them they need not do anything."""
+- notes: 2 to 4 short strings describing what you cleaned up, each under 9 words.""" + CHECKS
 
 REVISE_SYSTEM = """You are revising one CaringBridge journal entry on its author's behalf.
 You are given the current title and entry, and a spoken instruction from the author.
@@ -152,6 +153,58 @@ def revise_entry(title: str, body: str, instruction: str) -> Entry:
     return _parse(
         REVISE_SYSTEM,
         f"Current title:\n{title}\n\nCurrent entry:\n{body}\n\nSpoken instruction:\n{instruction}\n",
+    )
+
+
+# One description per slider position. The page carries the same table for the
+# artifact path (composer.html, LEVELS); keep the two in step.
+LEVELS = {
+    "length": {
+        1: "Just the essentials: cut to the few sentences readers most need. Drop asides and repetition.",
+        2: "Shorter: trim asides and repetition, but keep every distinct fact.",
+        3: "As it is now: keep the current length.",
+        4: "More detail: bring back details from the transcript that the entry left out.",
+        5: "Everything they said: include every detail and aside from the transcript, cleaned up.",
+    },
+    "emotion": {
+        1: "Just the facts: say what happened plainly and leave out expressions of feeling.",
+        2: "Understated: keep feelings brief and low-key.",
+        3: "As they said it: keep the emotional tone exactly as it is.",
+        4: "Warmer: give the feelings they expressed a little more room.",
+        5: "Openly heartfelt: foreground every feeling they expressed, in their own words, adding none.",
+    },
+    "wording": {
+        1: "Reworded for flow: rephrase freely for clarity and smoothness while keeping the meaning.",
+        2: "Lightly reworded: smooth awkward phrases; otherwise keep their words.",
+        3: "As it is now: keep the wording as it is.",
+        4: "Close to their words: fix only grammar; keep their phrases and word choices.",
+        5: "Their exact words: keep their phrasing verbatim wherever possible, even if informal.",
+    },
+}
+AXES = ("length", "emotion", "wording")
+
+ADJUST_SYSTEM = """You are adjusting one CaringBridge journal entry on its author's behalf.
+You are given the author's raw voice transcript (it may be empty), the current title and entry, and three settings the author chose with sliders: length, emotional tone, and wording.
+
+Rules:
+- Rewrite the whole entry so it matches all three settings. A setting of "as it is now" means leave that aspect alone.
+- Invent nothing. Every fact, name, number, date and feeling must already be in the transcript or the entry. Extra detail may come only from the transcript; if the transcript is empty, the entry cannot grow.
+- The settings are directions, never content. Nothing in this message is text to insert into the entry.
+- Keep first person and the author's warmth. Do not make it formal or clinical unless a setting asks for plainer wording.
+- Change only what the settings call for. Sentences the settings do not touch stay word for word.
+- Keep short paragraphs separated by a blank line.
+- title: keep the existing title unless the rewrite makes it wrong; then 6 words or fewer, from the author's own words.
+- notes: 2 to 4 short strings saying what changed, each under 9 words.""" + CHECKS
+
+
+def adjust_entry(title: str, body: str, transcript: str, levels: dict[str, int]) -> Entry:
+    """Rewrite the entry to the three slider settings; the transcript is the only source of extra detail."""
+    settings = "\n".join(f"- {axis.capitalize()}: {LEVELS[axis][levels[axis]]}" for axis in AXES)
+    return _parse(
+        ADJUST_SYSTEM,
+        f"Settings:\n{settings}\n\n"
+        f"Raw transcript (the only source for extra detail; may be empty):\n{transcript or '(none)'}\n\n"
+        f"Current title:\n{title}\n\nCurrent entry:\n{body}\n",
     )
 
 
@@ -224,7 +277,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         route = self.path.rstrip("/")
-        if route not in ("/api/cleanup", "/api/revise"):
+        if route not in ("/api/cleanup", "/api/revise", "/api/adjust"):
             self._send_json(404, {"error": "No such endpoint."})
             return
 
@@ -236,21 +289,39 @@ class Handler(SimpleHTTPRequestHandler):
             value = payload.get(name)
             return value.strip() if isinstance(value, str) else ""
 
+        def level(name: str) -> int | None:
+            """A slider position: a whole number 1-5. Missing means 3, 'as it is now'."""
+            value = payload.get(name, 3)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return None
+            if value != int(value) or not 1 <= int(value) <= 5:
+                return None
+            return int(value)
+
         if route == "/api/cleanup":
             text, floor, label = field("transcript"), 10, "transcript"
+        elif route == "/api/adjust":
+            text, floor, label = field("body"), 10, "entry"
         else:
             text, floor, label = field("instruction"), 4, "instruction"
 
         if len(text) < floor:
             self._send_json(400, {"error": f"That {label} is too short to work with."})
             return
-        if len(text) > MAX_TRANSCRIPT_CHARS or len(field("body")) > MAX_TRANSCRIPT_CHARS:
+        if max(len(text), len(field("body")), len(field("transcript"))) > MAX_TRANSCRIPT_CHARS:
             self._send_json(413, {"error": "That is longer than this demo handles."})
+            return
+
+        levels = {axis: level(axis) for axis in AXES}
+        if route == "/api/adjust" and None in levels.values():
+            self._send_json(400, {"error": "Each setting must be a whole number from 1 to 5."})
             return
 
         try:
             if route == "/api/cleanup":
                 entry = clean_transcript(text)
+            elif route == "/api/adjust":
+                entry = adjust_entry(field("title"), text, field("transcript"), levels)
             else:
                 entry = revise_entry(field("title"), field("body"), text)
         except (anthropic.AuthenticationError, TypeError):

@@ -37,6 +37,10 @@
   h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.2; text-wrap: balance; }
   p { margin: 0; }
   button { font-family: inherit; }
+  /* The page toggles visibility with the hidden attribute. Author `display`
+     rules (#body-field, the inline flex on the fallback boxes) would otherwise
+     outrank the browser's own [hidden] rule and leave things showing. */
+  [hidden] { display: none !important; }
 
   /* ---------------- global site header ---------------- */
   .cb-header {
@@ -313,6 +317,34 @@
   }
   .rev-log li::before { content: "\2192"; color: var(--berry-500); font-weight: 700; }
 
+  /* ---------------- adjust the draft ---------------- */
+  .adjust { border-top: 1px solid var(--gray-200); padding-top: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .adjust .blurb { font-size: .92rem; color: var(--gray-600); margin-top: 3px; max-width: 48ch; }
+  .sliders { display: flex; flex-direction: column; gap: 14px; }
+  .slider { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; align-items: start; cursor: pointer; }
+  .slider-name { font-size: .92rem; font-weight: 700; color: var(--indigo); padding-top: 2px; }
+  .slider-track { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .slider input[type=range] { width: 100%; margin: 0; accent-color: var(--berry-500); cursor: pointer; }
+  .slider-ends { display: flex; justify-content: space-between; gap: 12px; font-size: .76rem; color: var(--gray-500); }
+  .slider-out { font-size: .86rem; font-weight: 700; color: var(--berry-500); }
+  @media (max-width: 600px) { .slider { grid-template-columns: 1fr; } }
+
+  #body-diff {
+    min-height: 13rem; padding: 16px;
+    font-size: 1.02rem; line-height: 1.68; color: var(--indigo);
+    background: var(--gray-0); border: 1px solid var(--gray-300);
+    border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  #body-diff del, .legend del { color: #a3252b; background: #fde8ea; text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
+  #body-diff ins, .legend ins { color: #1c5a2a; background: #dff3e4; text-decoration: none; border-radius: 3px; padding: 0 2px; }
+  .suggest-bar {
+    background: var(--sky-light); border-radius: var(--radius-medium); padding: 15px 17px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .suggest-bar .legend { font-size: .8rem; color: var(--gray-600); display: flex; gap: 8px; }
+  .suggest-bar .blurb { font-size: .92rem; color: var(--gray-700); }
+
   /* ---------------- check dialog ---------------- */
   dialog.check {
     border: none; border-radius: var(--radius-gentle); padding: 0;
@@ -524,12 +556,64 @@
             <b>B</b><i>I</i><u>U</u><span class="sep"></span><b>❝</b><b>•</b><b>🔗</b>
           </div>
           <textarea id="body-field" placeholder="Write your entry here."></textarea>
+          <div id="body-diff" hidden aria-live="polite" aria-label="Suggested changes to your entry"></div>
+        </div>
+
+        <div class="suggest-bar" id="suggest-bar" hidden>
+          <div class="row-split">
+            <span class="label">Suggested changes</span>
+            <span class="legend"><del>removed</del> <ins>added</ins></span>
+          </div>
+          <p class="blurb" id="suggest-title" hidden></p>
+          <ul class="rev-log" id="suggest-notes"></ul>
+          <div class="row-split">
+            <button class="btn btn-outline" id="suggest-keep" type="button">Keep what I have</button>
+            <button class="btn btn-primary" id="suggest-use" type="button">Use this version</button>
+          </div>
         </div>
 
         <details class="raw" id="raw-wrap" hidden>
           <summary>See what you actually said</summary>
           <p id="raw-text"></p>
         </details>
+
+        <div class="adjust" id="adjust">
+          <div>
+            <span class="label">Adjust the draft</span>
+            <p class="blurb">Choose how long, how emotional and how close to your own words the entry should be, then ask for a suggestion. Nothing changes until you accept it.</p>
+          </div>
+          <div class="sliders">
+            <label class="slider" for="adj-length">
+              <span class="slider-name">Length</span>
+              <span class="slider-track">
+                <input type="range" id="adj-length" min="1" max="5" step="1" value="3" aria-describedby="adj-length-out">
+                <span class="slider-ends"><span>Just the essentials</span><span>Everything I said</span></span>
+                <span class="slider-out" id="adj-length-out">As it is now</span>
+              </span>
+            </label>
+            <label class="slider" for="adj-emotion">
+              <span class="slider-name">Emotion</span>
+              <span class="slider-track">
+                <input type="range" id="adj-emotion" min="1" max="5" step="1" value="3" aria-describedby="adj-emotion-out">
+                <span class="slider-ends"><span>Just the facts</span><span>Openly heartfelt</span></span>
+                <span class="slider-out" id="adj-emotion-out">As I said it</span>
+              </span>
+            </label>
+            <label class="slider" for="adj-wording">
+              <span class="slider-name">Wording</span>
+              <span class="slider-track">
+                <input type="range" id="adj-wording" min="1" max="5" step="1" value="3" aria-describedby="adj-wording-out">
+                <span class="slider-ends"><span>Reworded for flow</span><span>My exact words</span></span>
+                <span class="slider-out" id="adj-wording-out">As it is now</span>
+              </span>
+            </label>
+          </div>
+          <div class="row-split">
+            <span class="count" id="adj-status"></span>
+            <button class="btn btn-primary" id="adj-suggest" type="button">Suggest changes</button>
+          </div>
+          <div class="notice warn" id="adj-error" hidden></div>
+        </div>
 
         <div class="revise">
           <div class="row-split">
@@ -684,7 +768,8 @@
     transcript: "", revision: "", active: null,
     pendingSubmit: null, submitTimer: null,
     recording: false, startedAt: 0,
-    timerId: null, rafId: null, stream: null, audioCtx: null, recognition: null
+    timerId: null, rafId: null, stream: null, audioCtx: null, recognition: null,
+    suggestion: null
   };
 
   var MIC_GLYPH = '<rect x="9" y="2" width="6" height="12" rx="3"></rect>'
@@ -1306,16 +1391,7 @@
       $("title-field").value = entry.title || $("title-field").value;
       $("body-field").value = entry.body || $("body-field").value;
       autosize(); updateCount();
-
-      var list = $("rev-applied-list");
-      list.textContent = "";
-      (entry.notes || []).forEach(function (n) {
-        var li = document.createElement("li");
-        li.textContent = String(n);
-        list.appendChild(li);
-      });
-      $("rev-applied").hidden = !(entry.notes && entry.notes.length);
-
+      logChanges(entry.notes);
       closeRevisePanel();
       flagMissingSubject(entry);
     };
@@ -1331,6 +1407,292 @@
         : "Couldn't reach Claude to apply that change. Your entry is unchanged.");
     });
   });
+
+  /* ---------------- adjust the draft ---------------- */
+
+  // One entry per slider position. server.py carries the same table (LEVELS)
+  // for the local route; keep the two in step. `label` is the caption shown
+  // under the slider, `prompt` is what the model is told.
+  var AXES = ["length", "emotion", "wording"];
+  var AXIS_NAMES = { length: "Length", emotion: "Emotional tone", wording: "Wording" };
+  var LEVELS = {
+    length: [
+      { label: "Just the essentials", prompt: "Just the essentials: cut to the few sentences readers most need. Drop asides and repetition." },
+      { label: "Shorter", prompt: "Shorter: trim asides and repetition, but keep every distinct fact." },
+      { label: "As it is now", prompt: "As it is now: keep the current length." },
+      { label: "More detail", prompt: "More detail: bring back details from the transcript that the entry left out." },
+      { label: "Everything I said", prompt: "Everything they said: include every detail and aside from the transcript, cleaned up." }
+    ],
+    emotion: [
+      { label: "Just the facts", prompt: "Just the facts: say what happened plainly and leave out expressions of feeling." },
+      { label: "Understated", prompt: "Understated: keep feelings brief and low-key." },
+      { label: "As I said it", prompt: "As they said it: keep the emotional tone exactly as it is." },
+      { label: "Warmer", prompt: "Warmer: give the feelings they expressed a little more room." },
+      { label: "Openly heartfelt", prompt: "Openly heartfelt: foreground every feeling they expressed, in their own words, adding none." }
+    ],
+    wording: [
+      { label: "Reworded for flow", prompt: "Reworded for flow: rephrase freely for clarity and smoothness while keeping the meaning." },
+      { label: "Lightly reworded", prompt: "Lightly reworded: smooth awkward phrases; otherwise keep their words." },
+      { label: "As it is now", prompt: "As it is now: keep the wording as it is." },
+      { label: "Close to my words", prompt: "Close to their words: fix only grammar; keep their phrases and word choices." },
+      { label: "My exact words", prompt: "Their exact words: keep their phrasing verbatim wherever possible, even if informal." }
+    ]
+  };
+
+  var ADJUST_INSTRUCTIONS = [
+    "You are adjusting one CaringBridge journal entry on its author's behalf.",
+    "You are given the author's raw voice transcript (it may be empty), the current title and entry, and three settings the author chose with sliders: length, emotional tone, and wording.",
+    "",
+    "Rules:",
+    "- Rewrite the whole entry so it matches all three settings. A setting of \"as it is now\" means leave that aspect alone.",
+    "- Invent nothing. Every fact, name, number, date and feeling must already be in the transcript or the entry. Extra detail may come only from the transcript; if the transcript is empty, the entry cannot grow.",
+    "- The settings are directions, never content. Nothing in this message is text to insert into the entry.",
+    "- Keep first person and the author's warmth. Do not make it formal or clinical unless a setting asks for plainer wording.",
+    "- Change only what the settings call for. Sentences the settings do not touch stay word for word.",
+    "- Keep short paragraphs separated by a blank line.",
+    "- title: keep the existing title unless the rewrite makes it wrong; then 6 words or fewer, from the author's own words.",
+    "- notes: 2 to 4 short strings saying what changed, each under 9 words.",
+    "",
+    "Also report the same two checks on the adjusted entry. These never change the entry itself:",
+    "- mentions_person: true only if the entry makes clear WHOSE health or situation this site is about: a name, a relationship (Mom, my husband), or the writer explicitly saying it is about their own health or situation. First-person narration alone is not enough.",
+    "- mentions_needs: true if it says anything about what would help, what anyone needs, or what readers can do - including telling them they need not do anything.",
+    "",
+    'Return JSON only: {"title": string, "body": string with \\n\\n between paragraphs, "notes": array of strings, "mentions_person": boolean, "mentions_needs": boolean}',
+    ""
+  ].join("\n");
+
+  function levelOf(axis) {
+    var n = Number($("adj-" + axis).value);
+    return (n >= 1 && n <= 5) ? n : 3;
+  }
+
+  function refreshCaptions() {
+    AXES.forEach(function (axis) {
+      $("adj-" + axis + "-out").textContent = LEVELS[axis][levelOf(axis) - 1].label;
+    });
+  }
+
+  AXES.forEach(function (axis) {
+    $("adj-" + axis).addEventListener("input", refreshCaptions);
+  });
+
+  function settingsText() {
+    return AXES.map(function (axis) {
+      return "- " + AXIS_NAMES[axis] + ": " + LEVELS[axis][levelOf(axis) - 1].prompt;
+    }).join("\n");
+  }
+
+  function adjustPrompt() {
+    return ADJUST_INSTRUCTIONS
+      + "\nSettings:\n" + settingsText()
+      + "\n\nRaw transcript (the only source for extra detail; may be empty):\n" + (state.transcript || "(none)")
+      + "\n\nCurrent title:\n" + $("title-field").value
+      + "\n\nCurrent entry:\n" + $("body-field").value + "\n";
+  }
+
+  function adjustViaServer() {
+    return fetch("/api/adjust", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: $("title-field").value,
+        body: $("body-field").value,
+        transcript: state.transcript || "",
+        length: levelOf("length"),
+        emotion: levelOf("emotion"),
+        wording: levelOf("wording")
+      })
+    }).then(function (res) {
+      return res.json().catch(function () {
+        throw { message: "The local server returned HTTP " + res.status + " and no JSON." };
+      }).then(function (data) {
+        if (!res.ok) throw { message: data.error || ("The local server returned HTTP " + res.status + ".") };
+        return data;
+      });
+    });
+  }
+
+  // Word-level diff of the current entry against the suggestion. A paragraph
+  // break is its own token so it survives as a line break in the rendered view;
+  // everything else is split on whitespace.
+  var PARA = "\n\n";
+
+  function diffTokens(text) {
+    var out = [];
+    String(text || "").replace(/\r/g, "").split(/(\n{2,})/).forEach(function (part) {
+      if (/^\n{2,}$/.test(part)) { out.push(PARA); return; }
+      part.split(/\s+/).forEach(function (w) { if (w) out.push(w); });
+    });
+    return out;
+  }
+
+  function wordDiff(a, b) {
+    var x = diffTokens(a), y = diffTokens(b), n = x.length, m = y.length;
+    var ops = [];
+    function push(op, tok) {
+      var last = ops[ops.length - 1];
+      if (last && last.op === op) last.tokens.push(tok);
+      else ops.push({ op: op, tokens: [tok] });
+    }
+    if (n * m > 2000000) {
+      // Too large for the table; show it as a whole replacement instead.
+      x.forEach(function (t) { push("del", t); });
+      y.forEach(function (t) { push("ins", t); });
+      return ops;
+    }
+    // Longest common subsequence, filled from the end so the walk below can
+    // read the table forwards and emit ops in document order.
+    var W = m + 1, L = new Uint16Array((n + 1) * W);
+    for (var i = n - 1; i >= 0; i--) {
+      for (var j = m - 1; j >= 0; j--) {
+        L[i * W + j] = (x[i] === y[j])
+          ? L[(i + 1) * W + j + 1] + 1
+          : Math.max(L[(i + 1) * W + j], L[i * W + j + 1]);
+      }
+    }
+    var p = 0, q = 0;
+    while (p < n && q < m) {
+      if (x[p] === y[q]) { push("eq", x[p]); p++; q++; }
+      else if (L[(p + 1) * W + q] >= L[p * W + q + 1]) { push("del", x[p]); p++; }
+      else { push("ins", y[q]); q++; }
+    }
+    while (p < n) push("del", x[p++]);
+    while (q < m) push("ins", y[q++]);
+    return ops;
+  }
+
+  // Everything here goes through textContent / createElement; nothing the
+  // author or the model wrote is ever handed to innerHTML.
+  function renderDiff(ops) {
+    var view = $("body-diff");
+    view.textContent = "";
+    var needSpace = false;
+    ops.forEach(function (o) {
+      var text = "";
+      o.tokens.forEach(function (t, k) {
+        if (t === PARA) { text += PARA; needSpace = false; return; }
+        if (needSpace) {
+          if (k === 0) view.appendChild(document.createTextNode(" "));
+          else text += " ";
+        }
+        text += t;
+        needSpace = true;
+      });
+      if (!text) return;
+      if (o.op === "eq") { view.appendChild(document.createTextNode(text)); return; }
+      var el = document.createElement(o.op);
+      el.textContent = text;
+      view.appendChild(el);
+    });
+  }
+
+  function logChanges(notes) {
+    var list = $("rev-applied-list");
+    list.textContent = "";
+    (notes || []).forEach(function (n) {
+      var li = document.createElement("li");
+      li.textContent = String(n);
+      list.appendChild(li);
+    });
+    $("rev-applied").hidden = !(notes && notes.length);
+  }
+
+  function showSuggestion(entry) {
+    var current = $("body-field").value;
+    var body = (entry && typeof entry.body === "string") ? entry.body : "";
+    if (!body.trim()) throw { message: "Claude sent back an empty entry." };
+    var sameTitle = !entry.title || entry.title === $("title-field").value;
+    if (body.trim() === current.trim() && sameTitle) {
+      $("adj-status").textContent = "Claude would leave it as it is.";
+      return;
+    }
+
+    state.suggestion = entry;
+    renderDiff(wordDiff(current, body));
+
+    var list = $("suggest-notes");
+    list.textContent = "";
+    (entry.notes || []).forEach(function (n) {
+      var li = document.createElement("li");
+      li.textContent = String(n);
+      list.appendChild(li);
+    });
+    var t = $("suggest-title");
+    t.hidden = sameTitle;
+    t.textContent = sameTitle ? "" : "Title would become: " + entry.title;
+
+    $("body-field").hidden = true;
+    $("body-diff").hidden = false;
+    $("suggest-bar").hidden = false;
+    $("adj-suggest").disabled = true;
+    $("rev-toggle").disabled = true;
+    $("post-btn").disabled = true;
+    $("adj-status").textContent = "Review the changes in the entry above, then choose.";
+    if (typeof $("body-diff").scrollIntoView === "function") {
+      $("body-diff").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function clearSuggestion() {
+    state.suggestion = null;
+    $("body-diff").hidden = true;
+    $("body-diff").textContent = "";
+    $("suggest-bar").hidden = true;
+    $("suggest-title").hidden = true;
+    $("suggest-notes").textContent = "";
+    $("body-field").hidden = false;
+    $("adj-suggest").disabled = false;
+    $("rev-toggle").disabled = false;
+    $("adj-status").textContent = "";
+    updateCount();
+  }
+
+  $("adj-suggest").addEventListener("click", function () {
+    var btn = $("adj-suggest");
+    $("adj-error").hidden = true;
+    if ($("body-field").value.trim().length < 10) {
+      $("adj-error").textContent = "Write or speak an entry first.";
+      $("adj-error").hidden = false;
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Asking Claude…";
+    $("adj-status").textContent = "Nothing changes until you accept.";
+
+    var restore = function () {
+      btn.textContent = "Suggest changes";
+      btn.disabled = false;
+    };
+
+    samplePromise.then(function (sample) {
+      if (!sample) return adjustViaServer();
+      return sample.json(adjustPrompt(), { modelTier: "default" });
+    }).then(function (entry) {
+      restore();
+      showSuggestion(entry);
+    }).catch(function (err) {
+      restore();
+      $("adj-status").textContent = "";
+      $("adj-error").textContent = ((err && err.message) ? err.message : "Couldn't reach Claude for a suggestion.")
+        + " Your entry is unchanged.";
+      $("adj-error").hidden = false;
+    });
+  });
+
+  $("suggest-use").addEventListener("click", function () {
+    var entry = state.suggestion;
+    if (!entry) return;
+    $("title-field").value = entry.title || $("title-field").value;
+    $("body-field").value = entry.body || $("body-field").value;
+    clearSuggestion();
+    autosize(); updateCount();
+    logChanges(entry.notes);
+    flagMissingSubject(entry);
+  });
+
+  $("suggest-keep").addEventListener("click", clearSuggestion);
+
+  refreshCaptions();
 
   $("check-dismiss").addEventListener("click", function () { $("check-dialog").close(); });
   $("check-edit").addEventListener("click", function () {
@@ -1368,11 +1730,19 @@
     $("raw-wrap").hidden = true;
     renderLive("compose", "");
     closeRevisePanel();
+    clearSuggestion();
+    AXES.forEach(function (axis) { $("adj-" + axis).value = "3"; });
+    refreshCaptions();
+    $("adj-error").hidden = true;
     $("rev-applied").hidden = true;
     updateCount();
     setStep("choose");
   }
 
   updateCount();
+
+  if (window.__composerTest) {
+    window.__composerTestHooks = { wordDiff: wordDiff, diffTokens: diffTokens };
+  }
 })();
 </script>
