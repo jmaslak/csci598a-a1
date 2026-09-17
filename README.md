@@ -2,10 +2,11 @@
 
 This was built using Claude Code for a class demo.
 
-A simulated CaringBridge journal composer. The user either writes their first
-journal entry themselves, or speaks it; spoken input is transcribed in the
-browser, sent to Claude to strip filler words and false starts, and returned as
-a draft they edit before a simulated publish.
+A simulated CaringBridge journal composer. The user writes their first journal
+entry themselves, speaks it in one go, or is walked through it a question at a
+time; spoken input is transcribed in the browser, sent to Claude to strip filler
+words and false starts, and returned as a draft they edit before a simulated
+publish.
 
 Publishing is simulated throughout. Nothing is sent to CaringBridge, no account
 is connected, and the page carries a demo marker and a disclaimer.
@@ -18,7 +19,7 @@ is connected, and the page carries a demo marker and a disclaimer.
 | `server.py` | Local host, and the `/api/cleanup`, `/api/revise` and `/api/adjust` proxies to the Anthropic API. |
 | `build.py` | Wraps `composer.html` into a complete document at `serve/index.html`. |
 | `reload.sh` | Rebuild and restart in one step. |
-| `test_recorder.js` | Headless check of the recorder state machine and the adjust-the-draft controls (no browser, no mic). |
+| `test_recorder.js` | Headless check of the recorder state machine, the guided flow and the adjust-the-draft controls (no browser, no mic). |
 | `Caddyfile.example` | Optional TLS front end. |
 | `CLAUDE.md` | Orientation for Claude Code sessions working on this directory. |
 | `serve/index.html` | Generated. Do not edit — `build.py` overwrites it. |
@@ -157,6 +158,42 @@ is `low` — filler removal is simple and this keeps the wait short.
 Transcripts go to the Anthropic API. They are not written to disk, and request
 logging deliberately omits body content.
 
+## Walk me through it
+
+Facing one empty box and a microphone is the hardest version of this. The third
+option on the entry page asks six short questions instead, one screen at a
+time:
+
+1. **Who is this site about?** — their name and a bit about them, or about
+   yourself if the site is yours. It says outright that the diagnosis comes
+   next, so nobody feels they have to cram everything into the first answer.
+2. **What's been happening?**
+3. **What happens next?** — "we don't know yet" is an answer worth giving.
+4. **What would actually help?**
+5. **How would you like people to reach out?** — calls or texts, whether they
+   want to talk the whole thing through or think about something else for a
+   while, whether they'd rather people waited to be contacted. The one thing
+   readers of a first entry most often get wrong, and the one thing nobody
+   thinks to write down.
+6. **Anything else you want people to know?**
+
+Every question can be skipped, **Back** returns to the previous one with the
+answer still in the box, and each has a sample answer for demoing without a
+microphone. Stopping the mic moves to the next question, the same way stopping
+it elsewhere submits.
+
+There are two ways out at any point, in one button that says which one it is:
+with nothing answered yet it reads **I'd rather just write it** and opens a
+blank editor; once there is an answer it reads **Finish with what I've said**
+and writes up what there is. Neither discards anything.
+
+The answers are assembled into one transcript with each answer under its
+question — `Who this site is about:` and so on — and sent down the same cleanup
+path as a single recording. All three prompts say the headings are the page's
+words, not the writer's: they tell the parts apart and never appear in the
+entry. `localClean()`, the on-device last resort, strips them with a regex built
+from the same labels.
+
 ## Spoken revisions
 
 The review step has a **Speak changes** panel: the writer says what to add, cut
@@ -169,10 +206,12 @@ The instruction is a *direction, never content* — the prompt says so explicitl
 so a dictated sentence is never pasted into the entry. Everything not covered by
 the instruction is required to come back word for word.
 
-Both capture points share one recorder. `RECORDERS` in `composer.html` maps a
-target name to its element ids, prompts and buffer, so the mic, level ring,
-timer, live transcript and typed fallback behave identically in both places and
-cannot drift apart.
+All three capture points — one long recording, each guided answer, and spoken
+revisions — share one recorder. `RECORDERS` in `composer.html` maps a target
+name to its element ids, prompts and buffer, so the mic, level ring, timer, live
+transcript and typed fallback behave identically everywhere and cannot drift
+apart. The guided flow is a single target whose buffer and example swap between
+questions, not five recorders.
 
 ## Adjusting the draft
 
@@ -206,7 +245,7 @@ generated reaches `innerHTML`.
 
 The speech path is the easiest thing here to break and the most tedious to check
 by hand. `test_recorder.js` stubs enough DOM and `SpeechRecognition` to drive
-both recorders headlessly:
+every recorder headlessly:
 
 ```sh
 sed -n '/^<script>$/,/^<\/script>$/p' composer.html | sed '1d;$d' > /tmp/composer-check.js

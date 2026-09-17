@@ -175,6 +175,61 @@ check("revise: tail after stop() captured",
       $("rev-live").textContent.indexOf("take out the food part") >= 0, true);
 check("revise: auto-applied on stop", applied, true);
 
+print("guided questions");
+
+$("pick-guided").click();
+check("guided: opens on the person", $("guided-heading").textContent, "Who is this site about?");
+check("guided: says the condition comes later",
+      $("guided-aside").textContent.indexOf("what's been happening") >= 0, true);
+check("guided: card shown", $("step-guided").hidden, false);
+check("guided: way out offers the editor", $("guided-escape").textContent, "I'd rather just write it");
+check("guided: next disabled before an answer", $("guided-next").disabled, true);
+
+$("guided-mic-btn").click();
+latest().emit("This is about my mom, Linda. ", true);
+check("guided: answer transcribed", $("guided-live").textContent.indexOf("my mom, Linda") >= 0, true);
+check("guided: next enabled", $("guided-next").disabled, false);
+check("guided: way out now offers to finish", $("guided-escape").textContent, "Finish with what I've said");
+
+// Stopping the mic moves on, the same way it submits on the other recorders.
+$("guided-mic-btn").click();
+check("guided: stop advances a question", $("guided-heading").textContent, "What's been happening?");
+check("guided: counter follows", $("guided-count").textContent, "Question 2 of 6");
+check("guided: buffer cleared for the new question", $("guided-next").disabled, true);
+
+$("guided-back").click();
+check("guided: back returns to question 1", $("guided-count").textContent, "Question 1 of 6");
+check("guided: the earlier answer is still there",
+      $("guided-live").textContent.indexOf("my mom, Linda") >= 0, true);
+
+$("guided-skip").click();
+$("guided-sample").click();
+check("guided: sample answer loads for this question",
+      $("guided-live").textContent.indexOf("chest pain") >= 0, true);
+$("guided-next").click();
+
+var guidedText = window.__composerTestHooks.guidedTranscript;
+check("guided: each answer is headed by its question",
+      guidedText().indexOf("Who this site is about:\nThis is about my mom, Linda."), 0);
+check("guided: later answers are kept", guidedText().indexOf("What has happened:") > 0, true);
+check("guided: unanswered questions are left out", guidedText().indexOf("Anything else:"), -1);
+
+// Skip on to the last question, however many there turn out to be.
+for (var n = 0; n < 20 && $("guided-next").textContent !== "Turn this into an entry"; n++) {
+    $("guided-skip").click();
+}
+check("guided: last question relabels the button", $("guided-next").textContent, "Turn this into an entry");
+$("guided-next").click();
+check("guided: finishing runs the cleanup step", $("step-process").hidden, false);
+check("guided: questions card hidden after finishing", $("step-guided").hidden, true);
+
+// The last-resort regex cleaner has to drop the headings itself.
+var localClean = window.__composerTestHooks.localClean;
+check("guided: on-device cleanup drops the headings",
+      localClean("Who this site is about:\nThis is about my mom.").body.indexOf("Who this site"), -1);
+check("guided: on-device cleanup keeps the answer",
+      localClean("Who this site is about:\nThis is about my mom.").body, "This is about my mom.");
+
 print("adjust the draft");
 
 // --- sliders: captions follow the position ---

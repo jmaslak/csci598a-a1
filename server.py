@@ -99,6 +99,7 @@ Their family and friends have just been given the link, so this entry is what in
 The user message is a raw voice transcript. Turn it into the entry they meant to write.
 
 Rules:
+- The transcript is either one continuous recording, or short answers to questions they were asked, each under a heading such as "Who this site is about:". The headings are not their words: use them to tell the parts apart, weave the answers into one entry, and never copy a heading into it.
 - Remove filler words (um, uh, like, you know, I mean), false starts, repeated phrases and self-corrections. Keep the corrected version.
 - Keep their voice: same warmth, same plain wording, first person. Do not make it formal or clinical.
 - Invent nothing. Every fact, name, number and date must come from the transcript. If something was unclear, leave it out rather than guessing.
@@ -185,6 +186,7 @@ AXES = ("length", "emotion", "wording")
 
 ADJUST_SYSTEM = """You are adjusting one CaringBridge journal entry on its author's behalf.
 You are given the author's raw voice transcript (it may be empty), the current title and entry, and three settings the author chose with sliders: length, emotional tone, and wording.
+The transcript is either one continuous recording or short answers under headings such as "Who this site is about:". The headings are not the author's words and never belong in the entry.
 
 Rules:
 - Rewrite the whole entry so it matches all three settings. A setting of "as it is now" means leave that aspect alone.

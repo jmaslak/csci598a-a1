@@ -176,6 +176,16 @@
   .choice p { color: var(--gray-600); font-size: .95rem; }
   .choice .tag { display: block; margin-top: 9px; font-size: .76rem; font-weight: 700; color: var(--blue-600); }
 
+  /* ---------------- guided questions ---------------- */
+  .q-count { font-size: .76rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--berry-500); }
+  .q-dots { display: flex; gap: 7px; align-items: center; }
+  .q-dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--gray-0); border: 2px solid var(--gray-300);
+  }
+  .q-dots span.done { background: var(--berry-200); border-color: var(--berry-200); }
+  .q-dots span.on { background: var(--berry-500); border-color: var(--berry-500); }
+
   /* ---------------- recorder ---------------- */
   .recorder {
     background: var(--sky-light); border-radius: var(--radius-gentle);
@@ -206,6 +216,7 @@
   }
   .transcript-live .interim { color: var(--gray-400); }
   .transcript-live .placeholder { color: var(--gray-400); font-style: italic; }
+  .transcript-note { font-size: .86rem; color: var(--gray-600); max-width: 44ch; }
 
   /* ---------------- notices ---------------- */
   .notice {
@@ -433,6 +444,20 @@
         </nav>
         <p class="lede">This is the first thing your family and friends will read when they follow your site. Start it however is easiest for you.</p>
         <div class="choices">
+          <button class="choice" id="pick-guided" type="button">
+            <span class="glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 6h.01"></path><path d="M9 6h11"></path>
+                <path d="M4 12h.01"></path><path d="M9 12h11"></path>
+                <path d="M4 18h.01"></path><path d="M9 18h11"></path>
+              </svg>
+            </span>
+            <span>
+              <h3>Walk me through it</h3>
+              <p>A few short questions, one at a time — who this is about, what's happened, what would help. Answer each one out loud and we'll put them together.</p>
+              <span class="tag">Microphone · six short questions</span>
+            </span>
+          </button>
           <button class="choice" id="pick-speak" type="button">
             <span class="glyph" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -440,9 +465,9 @@
               </svg>
             </span>
             <span>
-              <h3>Speak it out loud</h3>
-              <p>Say it the way you'd say it on the phone. Take as long as you need — the ums, the false starts and the doubling back all get cleaned up before you see the draft.</p>
-              <span class="tag">Microphone · then you edit it</span>
+              <h3>Say it all in one go</h3>
+              <p>Say it the way you'd say it on the phone, with no questions in the way. Take as long as you need — the ums, the false starts and the doubling back all get cleaned up before you see the draft.</p>
+              <span class="tag">Microphone · one long recording</span>
             </span>
           </button>
           <button class="choice" id="pick-write" type="button">
@@ -457,6 +482,68 @@
               <span class="tag">Straight to the editor</span>
             </span>
           </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2, GUIDED -->
+    <section class="card" id="step-guided" aria-label="Answer a few questions out loud" hidden>
+      <div class="card-head">
+        <h2 id="guided-heading">Who is this site about?</h2>
+        <span class="meta">Step 2 of 3</span>
+      </div>
+      <div class="card-body">
+        <nav class="rail" aria-label="Progress">
+          <span class="node" data-state="done"><span class="dot"></span>Choose</span>
+          <span class="bar"></span>
+          <span class="node" data-state="active"><span class="dot"></span>Speak</span>
+          <span class="bar"></span>
+          <span class="node"><span class="dot"></span>Review</span>
+        </nav>
+
+        <div class="row-split">
+          <span class="q-count" id="guided-count">Question 1 of 6</span>
+          <span class="q-dots" id="guided-dots" aria-hidden="true"></span>
+        </div>
+
+        <p class="lede" id="guided-lede"></p>
+        <div class="notice" id="guided-aside" hidden></div>
+
+        <div class="recorder">
+          <div class="mic-stack">
+            <div class="mic-ring" id="guided-mic-ring"></div>
+            <button class="mic-btn" id="guided-mic-btn" type="button" data-live="false" aria-label="Start recording your answer">
+              <svg id="guided-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="timer" id="guided-timer">0:00</div>
+          <div class="status" id="guided-status">Press to answer out loud</div>
+          <div class="transcript-live" id="guided-live"><span class="placeholder">Your answer appears here as you talk.</span></div>
+          <p class="transcript-note">It's okay if there are mistakes here — you'll have a chance to edit all of this later.</p>
+        </div>
+
+        <div id="guided-fallback" hidden style="display:flex; flex-direction:column; gap:12px;">
+          <div class="notice warn" id="guided-fallback-reason"></div>
+          <div>
+            <label class="field-label" for="guided-text">Type your answer instead — fillers and all</label>
+            <textarea class="fallback" id="guided-text"></textarea>
+          </div>
+        </div>
+
+        <div class="notice warn" id="guided-error" hidden></div>
+
+        <div class="row-split">
+          <div class="row">
+            <button class="btn btn-text" id="guided-back" type="button">Back</button>
+            <button class="btn btn-text" id="guided-escape" type="button">I'd rather just write it</button>
+          </div>
+          <div class="row">
+            <button class="btn btn-text" id="guided-sample" type="button">Use a sample answer</button>
+            <button class="btn btn-outline" id="guided-skip" type="button">Skip this one</button>
+            <button class="btn btn-primary" id="guided-next" type="button" disabled>Next question</button>
+          </div>
         </div>
       </div>
     </section>
@@ -489,6 +576,7 @@
           <div class="timer" id="timer">0:00</div>
           <div class="status" id="status">Press to start speaking</div>
           <div class="transcript-live" id="transcript-live"><span class="placeholder">Your words appear here as you talk.</span></div>
+          <p class="transcript-note">It's okay if there are mistakes here — you'll have a chance to edit all of this later.</p>
         </div>
 
         <div id="speech-fallback" hidden style="display:flex; flex-direction:column; gap:12px;">
@@ -758,6 +846,7 @@
 
   var steps = {
     choose:  $("step-choose"),
+    guided:  $("step-guided"),
     speak:   $("step-speak"),
     process: $("step-process"),
     edit:    $("step-edit"),
@@ -769,16 +858,20 @@
     pendingSubmit: null, submitTimer: null,
     recording: false, startedAt: 0,
     timerId: null, rafId: null, stream: null, audioCtx: null, recognition: null,
-    suggestion: null
+    suggestion: null,
+    // The guided flow: one saved answer per question, plus the buffer the
+    // recorder writes into for the question on screen.
+    guided: [], guidedAnswer: "", guidedIndex: 0
   };
 
   var MIC_GLYPH = '<rect x="9" y="2" width="6" height="12" rx="3"></rect>'
     + '<path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v4"></path>';
   var STOP_GLYPH = '<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" stroke="none"></rect>';
 
-  // Speech is captured in two places: the first entry, and spoken revisions on
-  // the review step. One recorder drives both; a target says where it reads and
-  // writes, so neither copy can drift from the other.
+  // Speech is captured in three places: the first entry said in one go, each
+  // answer in the guided flow, and spoken revisions on the review step. One
+  // recorder drives all of them; a target says where it reads and writes, so no
+  // copy can drift from the others.
   var RECORDERS = {
     compose: {
       mic: "mic-btn", icon: "mic-icon", ring: "mic-ring",
@@ -793,6 +886,24 @@
       working: "Got it \u2014 writing your entry\u2026",
       get: function () { return state.transcript; },
       set: function (v) { state.transcript = v; }
+    },
+    guided: {
+      mic: "guided-mic-btn", icon: "guided-mic-icon", ring: "guided-mic-ring",
+      timer: "guided-timer", status: "guided-status", live: "guided-live",
+      fallbackBox: "guided-fallback", fallbackReason: "guided-fallback-reason",
+      fallbackText: "guided-text", diag: null,
+      submit: "guided-next", minChars: 2,
+      // guidedShow() replaces this with the current question's own example.
+      placeholder: "Your answer appears here as you talk.",
+      idle: "Press to answer out loud",
+      listening: "Listening — press the square when you're done",
+      stopped: "Stopped — go on, or keep talking",
+      working: "Got it…",
+      get: function () { return state.guidedAnswer; },
+      set: function (v) { state.guidedAnswer = v; },
+      // Leaving the questions means one thing with answers in hand and another
+      // without, so the way out is relabelled as the answers arrive.
+      after: function () { guidedRefreshEscape(); }
     },
     revise: {
       mic: "rev-mic-btn", icon: "rev-mic-icon", ring: "rev-mic-ring",
@@ -821,6 +932,7 @@
   function refreshSubmit(key) {
     var t = targetOf(key);
     $(t.submit).disabled = spokenText(key).length < t.minChars;
+    if (t.after) t.after();
   }
 
   // Pressing stop processes what was said - no second button press needed.
@@ -851,7 +963,9 @@
 
   /* ---------------- step 1 ---------------- */
 
-  $("pick-write").addEventListener("click", function () {
+  // Straight to a blank editor, with nothing spoken behind it. Also where the
+  // guided flow lands when someone changes their mind before answering.
+  function openBlankEditor() {
     state.transcript = "";
     $("edit-source").textContent = "Draft";
     $("raw-wrap").hidden = true;
@@ -861,7 +975,9 @@
     setStep("edit");
     autosize(); updateCount();
     $("title-field").focus();
-  });
+  }
+
+  $("pick-write").addEventListener("click", openBlankEditor);
 
   $("pick-speak").addEventListener("click", function () {
     setStep("speak");
@@ -873,6 +989,196 @@
   });
 
   $("speak-back").addEventListener("click", function () { stopRecording(); setStep("choose"); });
+
+  /* ---------------- step 2, guided: one question at a time ---------------- */
+
+  // One screen per entry. `label` heads this answer in the assembled
+  // transcript; `aside` is the reassurance under the ask; `hint` is the
+  // placeholder in the live transcript box; `sample` demos the question where
+  // there is no microphone.
+  var GUIDED = [
+    {
+      label: "Who this site is about",
+      heading: "Who is this site about?",
+      lede: "Start with their name, and a bit about them — who they are to you, what they're like. If this site is about you, say a little about yourself.",
+      aside: "Don't worry about the diagnosis yet. The next question asks what's been happening.",
+      hint: "For example: this is about my mom, Linda…",
+      sample: "Um, so, this is, this is about my mom, Linda. She's seventy-two, she taught piano for, for like thirty years and she still has a couple of students coming over on Tuesdays. She's stubborn. She's very stubborn, in a good way mostly."
+    },
+    {
+      label: "What has happened",
+      heading: "What's been happening?",
+      lede: "Now the part people are waiting to hear. What's going on, how it came up, and where things stand today. As much or as little as you want.",
+      aside: "",
+      hint: "For example: she went into the ER on Thursday night…",
+      sample: "So she went into the ER on Thursday night with, uh, with chest pain and they ended up admitting her. They ran a bunch of tests Friday and Saturday, and, uh, and yesterday the cardiologist told us that it's a blockage."
+    },
+    {
+      label: "What happens next",
+      heading: "What happens next?",
+      lede: "Anything that's coming up — a surgery, a treatment, a date you're waiting on. If you don't know yet, say that. It's worth saying.",
+      aside: "",
+      hint: "For example: surgery, probably later this week…",
+      sample: "She's going to need surgery, um, probably later this week once, once her other numbers come down a little. We don't have, we don't have an exact day yet."
+    },
+    {
+      label: "What would help",
+      heading: "What would actually help?",
+      lede: "Meals, rides, visits, someone to sit with you — or nothing at all. It's fine to say that just knowing people are reading is enough.",
+      aside: "",
+      hint: "For example: please don't feel like you have to reply…",
+      sample: "Honestly, um, please don't feel like you have to respond to every one of these. Just knowing that people are reading is, is really enough. If anybody's around next week, uh, my dad could probably use somebody to sit with him at the hospital."
+    },
+    {
+      label: "How to reach out",
+      heading: "How would you like people to reach out?",
+      lede: "Calls, texts, neither? Say whether you want to talk all this through or think about something else for a while — and whether you'd rather people waited until you get in touch.",
+      aside: "People mostly want to be told. \"Text, don't call\" saves everyone guessing.",
+      hint: "For example: texts are easier than calls right now…",
+      sample: "Um, texts are, texts are way easier than calls right now. I'm not, I'm not great on the phone by the end of the day. And honestly, if you want to talk about, uh, about literally anything else, the weather, your kids, I would love that. So please don't feel like you have to ask about the hospital every time."
+    },
+    {
+      label: "Anything else",
+      heading: "Anything else you want people to know?",
+      lede: "How often you plan to post, who else is around, anything you'd rather say once here than forty times by text.",
+      aside: "",
+      hint: "For example: I'll post every couple of days…",
+      sample: "I'll try to post something every couple of days, even if there's, if there's nothing really new to say. She's in pretty good spirits, she's already complaining about the food, so, you know, that's a good sign I think."
+    }
+  ];
+
+  function guidedLast() { return state.guidedIndex === GUIDED.length - 1; }
+
+  function guidedSave() {
+    state.guided[state.guidedIndex] = spokenText("guided");
+  }
+
+  // Answers already put away, plus whatever is on screen right now.
+  function guidedHasAnswers() {
+    if (spokenText("guided")) return true;
+    return state.guided.some(function (a) { return a && a.trim(); });
+  }
+
+  function guidedRefreshEscape() {
+    $("guided-escape").textContent = guidedHasAnswers()
+      ? "Finish with what I've said"
+      : "I'd rather just write it";
+  }
+
+  function guidedDots() {
+    var box = $("guided-dots");
+    box.textContent = "";
+    GUIDED.forEach(function (p, i) {
+      var dot = document.createElement("span");
+      if (i === state.guidedIndex) dot.className = "on";
+      else if (state.guided[i] && state.guided[i].trim()) dot.className = "done";
+      box.appendChild(dot);
+    });
+  }
+
+  function guidedShow(i) {
+    stopRecording();
+    state.guidedIndex = i;
+    var q = GUIDED[i];
+
+    $("guided-heading").textContent = q.heading;
+    $("guided-lede").textContent = q.lede;
+    $("guided-aside").textContent = q.aside;
+    $("guided-aside").hidden = !q.aside;
+    $("guided-count").textContent = "Question " + (i + 1) + " of " + GUIDED.length;
+    $("guided-error").hidden = true;
+    guidedDots();
+
+    // The recorder is one target reused across questions: swap its buffer and
+    // its example, then re-render as if it had just been opened.
+    state.guidedAnswer = state.guided[i] || "";
+    $("guided-text").value = state.guided[i] || "";
+    $("guided-text").placeholder = q.hint;
+    RECORDERS.guided.placeholder = q.hint;
+    $("guided-timer").textContent = "0:00";
+    $("guided-status").textContent = usingFallback("guided")
+      ? "Microphone unavailable"
+      : RECORDERS.guided.idle;
+    renderLive("guided", "");
+    refreshSubmit("guided");
+
+    $("guided-next").textContent = guidedLast() ? "Turn this into an entry" : "Next question";
+    $("guided-skip").textContent = guidedLast() ? "Skip this one and finish" : "Skip this one";
+    $("guided-back").textContent = i === 0 ? "Back" : "Previous question";
+  }
+
+  // Each answer is headed by its question so the model can tell the parts
+  // apart. The prompts say the headings are not the writer's words.
+  function guidedTranscript() {
+    return GUIDED.map(function (q, i) {
+      var answer = (state.guided[i] || "").trim();
+      return answer ? q.label + ":\n" + answer : "";
+    }).filter(Boolean).join("\n\n");
+  }
+
+  function guidedFinish() {
+    stopRecording();
+    guidedSave();
+    var raw = guidedTranscript();
+    if (raw.length < 10) {
+      $("guided-error").textContent = "Answer at least one question, or write the entry yourself.";
+      $("guided-error").hidden = false;
+      return;
+    }
+    state.transcript = raw;
+    setStep("process");
+    cleanUp(raw);
+  }
+
+  function guidedAdvance() {
+    if (guidedLast()) { guidedFinish(); return; }
+    guidedSave();
+    guidedShow(state.guidedIndex + 1);
+  }
+
+  $("pick-guided").addEventListener("click", function () {
+    state.guided = [];
+    guidedShow(0);
+    setStep("guided");
+    if (!SR) {
+      showFallback("guided", "This browser doesn't have built-in speech recognition — Chrome and Edge do. You can still answer every question by typing below.");
+    } else if (embedAllowsMic() === false) {
+      showFallback("guided", "The page this demo is embedded in doesn't hand microphone access through to it. That's set by the embedding page, so granting mic permission in your browser and reloading won't change it. To use your voice, run this page on its own. To see the rest of the flow right now, type your answers or load the sample ones.");
+    }
+  });
+
+  $("guided-next").addEventListener("click", guidedAdvance);
+
+  // Skip keeps whatever was said - it means "move on", not "throw this away".
+  $("guided-skip").addEventListener("click", guidedAdvance);
+
+  $("guided-back").addEventListener("click", function () {
+    stopRecording();
+    guidedSave();
+    if (state.guidedIndex === 0) setStep("choose");
+    else guidedShow(state.guidedIndex - 1);
+  });
+
+  // The way out of the questions. With nothing said yet it opens a blank
+  // editor; once there are answers it writes them up rather than dropping them.
+  $("guided-escape").addEventListener("click", function () {
+    stopRecording();
+    if (guidedHasAnswers()) guidedFinish();
+    else openBlankEditor();
+  });
+
+  $("guided-sample").addEventListener("click", function () {
+    stopRecording();
+    var sample = GUIDED[state.guidedIndex].sample;
+    if (usingFallback("guided")) {
+      $("guided-text").value = sample;
+    } else {
+      state.guidedAnswer = sample;
+      renderLive("guided", "");
+      $("guided-status").textContent = "Sample answer loaded";
+    }
+    refreshSubmit("guided");
+  });
 
   /* ---------------- step 2: speech ---------------- */
 
@@ -1079,6 +1385,7 @@
     });
   }
   bindMic("compose");
+  bindMic("guided");
   bindMic("revise");
 
   $("mic-test").addEventListener("click", function () {
@@ -1128,6 +1435,7 @@
     "Below is a raw voice transcript. Turn it into the entry they meant to write.",
     "",
     "Rules:",
+    "- The transcript is either one continuous recording, or short answers to questions they were asked, each under a heading such as \"Who this site is about:\". The headings are not their words: use them to tell the parts apart, weave the answers into one entry, and never copy a heading into it.",
     "- Remove filler words (um, uh, like, you know, I mean), false starts, repeated phrases and self-corrections. Keep the corrected version.",
     "- Keep their voice: same warmth, same plain wording, first person. Do not make it formal or clinical.",
     "- Invent nothing. Every fact, name, number and date must come from the transcript. If something was unclear, leave it out rather than guessing.",
@@ -1182,9 +1490,17 @@
 
   var FILLERS = /\b(um+|uh+|erm?|ah+|like|you know|i mean|sort of|kind of|basically|literally|actually|honestly|i guess|i think|so yeah)\b[,]?\s*/gi;
 
+  // The guided flow heads each answer with its question. The model is told to
+  // read past those; the regex cleaner has to be shown the door explicitly, or
+  // they end up in the draft.
+  var HEADINGS = new RegExp("^(?:" + GUIDED.map(function (q) {
+    return q.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }).join("|") + "):[ \\t]*$", "gm");
+
   function localClean(raw) {
     var before = raw.split(/\s+/).length;
     var text = raw
+      .replace(HEADINGS, "")
       .replace(/\b(\w+)([ ,—-]+)\1\b/gi, "$1")
       .replace(FILLERS, "")
       .replace(/\s*—\s*/g, " ")
@@ -1442,6 +1758,7 @@
   var ADJUST_INSTRUCTIONS = [
     "You are adjusting one CaringBridge journal entry on its author's behalf.",
     "You are given the author's raw voice transcript (it may be empty), the current title and entry, and three settings the author chose with sliders: length, emotional tone, and wording.",
+    "The transcript is either one continuous recording or short answers under headings such as \"Who this site is about:\". The headings are not the author's words and never belong in the entry.",
     "",
     "Rules:",
     "- Rewrite the whole entry so it matches all three settings. A setting of \"as it is now\" means leave that aspect alone.",
@@ -1720,6 +2037,10 @@
   function resetAll() {
     stopRecording();
     state.transcript = "";
+    state.guided = [];
+    state.guidedAnswer = "";
+    $("guided-text").value = "";
+    $("guided-error").hidden = true;
     $("title-field").value = "";
     $("body-field").value = "";
     $("fallback-text").value = "";
@@ -1742,7 +2063,10 @@
   updateCount();
 
   if (window.__composerTest) {
-    window.__composerTestHooks = { wordDiff: wordDiff, diffTokens: diffTokens };
+    window.__composerTestHooks = {
+      wordDiff: wordDiff, diffTokens: diffTokens,
+      guidedTranscript: guidedTranscript, localClean: localClean
+    };
   }
 })();
 </script>

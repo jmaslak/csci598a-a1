@@ -54,9 +54,17 @@ Things that look arbitrary and are not:
 - **Only the mic button passes `{submit: true}`.** Cancel, Back, Use a sample
   and Start over must keep calling `stopRecording()` plain, or navigating away
   fires an API request.
-- **One recorder, two targets.** `RECORDERS` maps a target name to element ids
+- **One recorder, three targets.** `RECORDERS` maps a target name to element ids
   and buffer. Add capture points by adding a target — never by copying the
-  recorder.
+  recorder. The optional `after` hook runs on every `refreshSubmit`; only
+  `guided` uses it, to relabel its way out.
+- **The guided flow reuses one target across five questions.** `guidedShow()`
+  swaps `state.guidedAnswer`, the textarea value and
+  `RECORDERS.guided.placeholder`, then re-renders. Answers live in
+  `state.guided[]`, saved on every navigation, so Back restores them.
+- **Guided answers reach the model under headings** (`guidedTranscript()`).
+  All three prompts and `localClean()`'s `HEADINGS` regex know the headings are
+  not the writer's words; change the `label` values and all four move together.
 - **The subject check returns booleans, not prose.** The model reports
   `mentions_person` / `mentions_needs`; all wording lives in
   `flagMissingSubject()`. This is deliberate: the user asked that the advice
