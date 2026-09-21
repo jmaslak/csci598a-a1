@@ -35,7 +35,7 @@ from pathlib import Path
 import anthropic
 from pydantic import BaseModel
 
-MODEL = "claude-opus-5"
+MODEL = "claude-sonnet-5"
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8777"))
 MAX_TRANSCRIPT_CHARS = 20000

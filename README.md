@@ -217,7 +217,7 @@ secure context at top level, so the microphone works there.
    only; it removes ums but cannot repair false starts or repetition. When it
    runs, the page says so rather than passing the output off as the model's.
 
-The server calls `claude-opus-5` via `messages.parse()` against a Pydantic
+The server calls `claude-sonnet-5` via `messages.parse()` against a Pydantic
 `Entry` model, so `title` / `body` / `notes` come back schema-validated. Effort
 is `low` — filler removal is simple and this keeps the wait short.
 

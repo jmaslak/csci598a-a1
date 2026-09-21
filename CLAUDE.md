@@ -111,7 +111,7 @@ Things that look arbitrary and are not:
 
 ## Anthropic API
 
-`server.py` calls `claude-opus-5` through `messages.parse()` with the Pydantic
+`server.py` calls `claude-sonnet-5` through `messages.parse()` with the Pydantic
 `Entry` model, effort `low`. `_parse()` backs all three endpoints and the
 `CHECKS` string is appended to all three prompts so they cannot disagree. Transcripts are not
 written to disk and request logging omits bodies.
