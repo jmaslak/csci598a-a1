@@ -7,9 +7,12 @@ hand the page a microphone.
 
     ./venv/bin/python server.py          # http://127.0.0.1:8777
 
-Every route is behind HTTP Basic auth, with the username and password read from
-.env (BASIC_AUTH_USER / BASIC_AUTH_PASS). The server refuses to start if either
-is missing rather than serving the page unprotected.
+It binds loopback on 8777 unless HOST / PORT are set in the environment; a
+hosting platform such as Render sets PORT and render.yaml sets HOST=0.0.0.0.
+
+Every route except /healthz is behind HTTP Basic auth, with the username and
+password read from .env (BASIC_AUTH_USER / BASIC_AUTH_PASS). The server refuses
+to start if either is missing rather than serving the page unprotected.
 
 Anthropic credentials come from the SDK's normal resolution order:
 ANTHROPIC_API_KEY, then ANTHROPIC_AUTH_TOKEN, then an `ant auth login` profile;
@@ -33,8 +36,8 @@ import anthropic
 from pydantic import BaseModel
 
 MODEL = "claude-opus-5"
-HOST = "127.0.0.1"
-PORT = 8777
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "8777"))
 MAX_TRANSCRIPT_CHARS = 20000
 HERE = Path(__file__).resolve().parent
 WEB_ROOT = HERE / "serve"
@@ -230,6 +233,21 @@ class Handler(SimpleHTTPRequestHandler):
             & hmac.compare_digest(password.encode(), AUTH_PASS.encode())
         )
 
+    def end_headers(self) -> None:
+        """Add the browser-facing headers the Caddy example used to set.
+
+        Render's proxy terminates TLS but adds no headers of its own, so they
+        live here and apply on every route. Being framed is exactly what
+        withholds the microphone, so framing is refused outright; the rest are
+        the usual hardening for a page that is reachable from the internet.
+        """
+        self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Permissions-Policy", "microphone=(self), camera=(), geolocation=()")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        super().end_headers()
+
     def _challenge(self) -> None:
         body = b"Authentication required.\n"
         self.send_response(401)
@@ -247,6 +265,17 @@ class Handler(SimpleHTTPRequestHandler):
         return False
 
     def do_GET(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
+        if self.path == "/healthz":
+            # The one route outside the auth gate: the hosting platform's
+            # liveness probe. It must never say more than this - no version,
+            # no config, nothing about credentials.
+            body = b"ok\n"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self._gate():
             super().do_GET()
 
@@ -365,7 +394,8 @@ def main() -> int:
     if not AUTH_USER or not AUTH_PASS:
         print(
             "BASIC_AUTH_USER and BASIC_AUTH_PASS must both be set.\n"
-            "Put them in .env (see .env.example), then start again.",
+            "Put them in .env (see .env.example) or, on a hosting platform, in the\n"
+            "service's environment variables, then start again.",
             file=sys.stderr,
         )
         return 1

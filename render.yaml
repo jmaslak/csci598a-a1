@@ -1,0 +1,32 @@
+# Render Blueprint: one web service running server.py on the free plan.
+#
+# Applies when the repo is connected to Render through its GitHub app (New ->
+# Blueprint). When Render pulls the repo as a "Public Git repository" instead,
+# Blueprints do not apply - create the web service by hand with the same
+# values; they are listed in README.md under "Hosting it on Render".
+#
+# Deploys are triggered by .github/workflows/deploy.yml after the checks pass,
+# so Render's own deploy-on-push is off. The three secrets are set in the
+# Render dashboard, never here.
+services:
+  - type: web
+    name: caringbridge-composer
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: false
+    buildCommand: pip install -r requirements.txt && python build.py
+    startCommand: python server.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: HOST
+        value: 0.0.0.0
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: BASIC_AUTH_USER
+        sync: false
+      - key: BASIC_AUTH_PASS
+        sync: false
