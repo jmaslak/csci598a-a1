@@ -43,6 +43,11 @@ to that same URL rather than creating a new one.
 The local server exists because an embedded frame withholds microphone access;
 that is not fixable from inside the page.
 
+The hosted copy is a Render free web service deployed by
+`.github/workflows/deploy.yml` on every push to `main`, after the build and
+`test_recorder.js` pass. `render.yaml` and the README section "Hosting it on
+Render" carry the service settings; keep them in step.
+
 ## Load-bearing details
 
 Things that look arbitrary and are not:
@@ -76,6 +81,12 @@ Things that look arbitrary and are not:
   not say whose site this is. Loosening this makes the check always pass.
 - **Basic auth fails closed.** Missing `BASIC_AUTH_USER`/`BASIC_AUTH_PASS` exits
   rather than serving unprotected.
+- **`/healthz` is the only route outside the auth gate.** It is Render's
+  liveness probe and answers `ok`, nothing more — never add version, config
+  or credential state to it. The match is exact (`self.path == "/healthz"`).
+- **`HOST`/`PORT` come from the environment.** `server.py` defaults to
+  loopback:8777; Render sets `PORT` and `render.yaml` sets `HOST=0.0.0.0`.
+  Never hardcode `0.0.0.0` — local runs must stay on loopback.
 - **Slider positions are integers 1–5, mapped to sentences by `LEVELS`.**
   `server.py` and `composer.html` each carry the table (server for `/api/adjust`,
   page for the artifact path and the captions); change both or the two routes

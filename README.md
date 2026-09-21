@@ -21,6 +21,8 @@ is connected, and the page carries a demo marker and a disclaimer.
 | `reload.sh` | Rebuild and restart in one step. |
 | `test_recorder.js` | Headless check of the recorder state machine, the guided flow and the adjust-the-draft controls (no browser, no mic). |
 | `Caddyfile.example` | Optional TLS front end. |
+| `render.yaml` | Render Blueprint for the hosted copy. |
+| `.github/workflows/deploy.yml` | GitHub Actions: run the checks, then trigger the Render deploy. |
 | `CLAUDE.md` | Orientation for Claude Code sessions working on this directory. |
 | `serve/index.html` | Generated. Do not edit — `build.py` overwrites it. |
 
@@ -60,8 +62,10 @@ so it is safe to run repeatedly and whether or not a server is already up.
 
 ## Basic auth
 
-Every route — the page and both API endpoints — requires HTTP Basic
-credentials, taken from `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` in `.env`.
+Every route — the page and the API endpoints — requires HTTP Basic
+credentials, taken from `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` in `.env`. The
+one exception is `GET /healthz`, the hosting platform's liveness probe, which
+answers `ok` and nothing else.
 
 - **Fails closed.** If either variable is missing the server prints why and
   exits rather than serving the page unprotected.
@@ -132,6 +136,68 @@ Caddy auth is left commented out. `server.py` already gates every route, and
 Caddy forwards the `Authorization` header, so enabling both with the same
 credentials is redundant but harmless; with *different* credentials the browser
 gets challenged twice.
+
+## Hosting it on Render with GitHub Actions
+
+The Caddy route above needs a domain and inbound ports 80 and 443, which a
+workstation on a campus network usually cannot offer. The hosted copy runs on
+[Render](https://render.com) instead: a free web service with a stable
+`https://<name>.onrender.com` address and a certificate, so the page is a
+secure context and the microphone works exactly as it does on `127.0.0.1`.
+GitHub Actions is the gate in front of it — `.github/workflows/deploy.yml` runs
+the build, compiles the server and runs the headless recorder test on every
+push to `main`, and only when all of that passes does it trigger the deploy.
+Render's own deploy-on-push is off so nothing reaches the site untested.
+
+The server needs two things from the platform, both already handled:
+`server.py` reads `HOST` and `PORT` from the environment (Render assigns the
+port and `render.yaml` sets `HOST=0.0.0.0`), and it answers `GET /healthz`
+without credentials for Render's probe. `serve/` is gitignored, so
+`build.py` runs in the build command rather than being committed.
+
+One-time setup, in this order:
+
+1. **Create the service.** In the Render dashboard, *New → Web Service*. If
+   the repo is connected through Render's GitHub app, choose *Blueprint*
+   instead and `render.yaml` supplies everything below. For a repo Render
+   only pulls as a *Public Git repository*, enter the same values by hand:
+
+   | Setting | Value |
+   |---|---|
+   | Runtime | Python |
+   | Branch | `main` |
+   | Build command | `pip install -r requirements.txt && python build.py` |
+   | Start command | `python server.py` |
+   | Health check path | `/healthz` |
+   | Auto-deploy | **Off** (the workflow deploys) |
+   | Instance type | Free |
+
+2. **Set the environment variables** on the service: `PYTHON_VERSION=3.13.5`,
+   `HOST=0.0.0.0`, and the three from `.env.example` — `ANTHROPIC_API_KEY`,
+   `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`. The page is now on the public
+   internet, so pick a real password here rather than the local one.
+
+3. **Give the workflow the deploy hook.** *Settings → Deploy Hook* on the
+   service shows a URL; store it as the repository secret
+   `RENDER_DEPLOY_HOOK_URL`. Optionally also store a Render API key
+   (*Account settings → API Keys*) as `RENDER_API_KEY`; with it the workflow
+   waits for the deploy to go live and fails if Render's build or start fails.
+   Both can be set from the command line by a collaborator:
+
+   ```sh
+   gh secret set RENDER_DEPLOY_HOOK_URL     # paste the URL at the prompt
+   gh secret set RENDER_API_KEY             # optional
+   ```
+
+After that, every push to `main` deploys, and *Actions → Deploy → Run
+workflow* redeploys the current `main` on demand. Without the deploy-hook
+secret the checks still run and the deploy step is skipped, so any clone of
+the repo gets CI for free.
+
+The free instance sleeps after fifteen minutes without traffic and takes
+30–60 seconds to wake, so open the URL once before a demo. Basic auth still
+gates the hosted copy; the browser prompts on first load just as it does
+locally.
 
 ## Why it runs locally
 
@@ -322,7 +388,7 @@ guessing would be worse than staying quiet.
 | Network | outbound HTTPS to `api.anthropic.com` | Every cleanup and revision is an API call. |
 | Credential | an Anthropic API key | Without one the page silently drops to on-device cleanup. |
 | Auth | `BASIC_AUTH_USER` + `BASIC_AUTH_PASS` | Required — the server exits without them. |
-| Port | 8777 free on loopback | Hardcoded as `PORT` in `server.py`. |
+| Port | 8777 free on loopback | Defaults in `server.py`; `HOST` and `PORT` in the environment override them, which is how a hosting platform hands the server its port. |
 | OS | anything with POSIX `sh`, `lsof`, `nohup` | Only `reload.sh` needs these — macOS and Linux qualify. On Windows run `server.py` directly. |
 
 No database, no build toolchain, no Node. `server.py` is Python standard library
