@@ -411,6 +411,13 @@ Chrome's and Safari's recognizers are **server-based**: audio goes to the
 browser vendor for transcription, so voice input needs a live connection and is
 not private to the machine. Only the cleanup step involves Anthropic.
 
+That service can be unreachable even when the rest of the internet is fine —
+Chrome then raises `network`, having opened the microphone and heard you. It
+fails independently of this page, the server and the API key, so nothing here
+can repair it; the page says so and offers the typed box. Every other error
+code lands the same way, naming itself in the diagnosis line, because a
+recognizer that fails quietly is indistinguishable from one still listening.
+
 The page must also be a **secure context at top level** — `127.0.0.1` or HTTPS,
 not inside a frame that withholds microphone permission. See "Why it runs
 locally" above.
