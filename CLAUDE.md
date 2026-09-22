@@ -56,6 +56,11 @@ Things that look arbitrary and are not:
   `state.recording`) and arm `state.pendingSubmit` *before* calling `stop()`.
   `stop()` can fire `onend` synchronously, and the submit that follows re-enters
   `stopRecording`. Getting this wrong silently loses the auto-submit.
+- **No recognizer error may exit `onerror` silently — except `aborted`.** A
+  swallowed code looks exactly like a recorder still listening: ring pulsing,
+  timer running, no words. `network` (the browser's own speech service not
+  answering) was silent and cost an afternoon. `aborted` is what `stop()`
+  raises, so it must stay silent or every normal stop reports a failure.
 - **Only the mic button passes `{submit: true}`.** Cancel, Back, Use a sample
   and Start over must keep calling `stopRecording()` plain, or navigating away
   fires an API request.

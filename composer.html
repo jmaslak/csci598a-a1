@@ -1193,24 +1193,25 @@
     return null; // unknown
   }
 
-  function micDiagnosis() {
+  function micDiagnosis(code) {
     var bits = [];
     var allowed = embedAllowsMic();
     bits.push("embed grants mic: " + (allowed === null ? "unknown" : allowed));
     bits.push("in a frame: " + (window.self !== window.top));
     bits.push("secure context: " + window.isSecureContext);
+    if (code) bits.push("recognizer error: " + code);
     return bits.join("  ·  ");
   }
 
-  function showFallback(key, reason) {
+  function showFallback(key, reason, status, code) {
     var t = targetOf(key);
     $(t.fallbackReason).textContent = reason;
-    if (t.diag) $(t.diag).textContent = micDiagnosis();
+    if (t.diag) $(t.diag).textContent = micDiagnosis(code);
     $(t.fallbackBox).hidden = false;
     $(t.mic).disabled = true;
     $(t.mic).style.opacity = ".4";
     $(t.mic).style.cursor = "not-allowed";
-    $(t.status).textContent = "Microphone unavailable";
+    $(t.status).textContent = status || "Microphone unavailable";
     $(t.fallbackText).addEventListener("input", function () { refreshSubmit(key); });
   }
 
@@ -1284,17 +1285,38 @@
       refreshSubmit(key);
     };
 
+    // Every code has to end somewhere the writer can see. A recognizer that
+    // fails quietly is indistinguishable from one that is still listening:
+    // the ring keeps pulsing, the timer keeps running, and no words arrive.
     rec.onerror = function (ev) {
+      // stop() and abort() raise this by design; it is not a failure.
+      if (ev.error === "aborted") return;
+      if (ev.error === "no-speech") {
+        $(t.status).textContent = "Didn't catch that — keep talking";
+        return;
+      }
+
+      stopRecording();
       if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-        stopRecording();
         showFallback(key, embedAllowsMic() === false
           ? "The page this demo is embedded in doesn't hand microphone access through to it. That's set by the embedding page, so browser permissions and reloading won't change it. Run the page on its own to use your voice, or type below."
-          : "The microphone was blocked. If you never saw a permission prompt, the page it's embedded in is withholding mic access and your browser settings can't override that. Type what you want below instead.");
+          : "The microphone was blocked. If you never saw a permission prompt, the page it's embedded in is withholding mic access and your browser settings can't override that. Type what you want below instead.",
+          "Microphone unavailable", ev.error);
       } else if (ev.error === "audio-capture") {
-        stopRecording();
-        showFallback(key, "No microphone was found on this device. You can type it below instead.");
-      } else if (ev.error === "no-speech") {
-        $(t.status).textContent = "Didn't catch that — keep talking";
+        showFallback(key, "No microphone was found on this device. You can type it below instead.",
+          "Microphone unavailable", ev.error);
+      } else if (ev.error === "network") {
+        // The microphone worked; the browser's own transcription service did
+        // not answer. Chrome and Safari send the audio to their vendor to be
+        // transcribed, so this fails independently of the page and of the key.
+        showFallback(key, "Your browser heard you, but couldn't reach the service it uses to turn speech into text. That service belongs to the browser, not to this page, so reloading won't help. Try a different browser, or type what you wanted to say below.",
+          "Transcription unavailable", ev.error);
+      } else if (ev.error === "language-not-supported") {
+        showFallback(key, "Your browser's speech service doesn't transcribe " + (rec.lang || "this language") + ". You can type it below instead.",
+          "Transcription unavailable", ev.error);
+      } else {
+        showFallback(key, "Speech recognition stopped with an error (" + ev.error + "). You can type what you wanted to say below.",
+          "Transcription unavailable", ev.error);
       }
     };
 
@@ -2065,7 +2087,8 @@
   if (window.__composerTest) {
     window.__composerTestHooks = {
       wordDiff: wordDiff, diffTokens: diffTokens,
-      guidedTranscript: guidedTranscript, localClean: localClean
+      guidedTranscript: guidedTranscript, localClean: localClean,
+      stopRecording: stopRecording
     };
   }
 })();

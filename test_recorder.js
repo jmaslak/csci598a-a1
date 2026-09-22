@@ -102,6 +102,9 @@ FakeSR.prototype.stop = function () {
     if (this.tail) this.emit(this.tail, true);
     if (this.onend) this.onend();
 };
+FakeSR.prototype.fail = function (code) {
+    if (this.onerror) this.onerror({ error: code });
+};
 FakeSR.prototype.emit = function (text, isFinal) {
     this.onresult({
         resultIndex: 0,
@@ -267,5 +270,57 @@ check("diff: whitespace differences are not changes",
       flat(hooks.wordDiff("a  b\nc", "a b c")), "eq:a_b_c");
 check("diff: words dropped at the end", flat(hooks.wordDiff("a b c d", "a b")), "eq:a_b del:c_d");
 check("diff: empty before, text after", flat(hooks.wordDiff("", "a b")), "ins:a_b");
+
+
+// --- recognizer errors: none of them may fail silently ---
+// A quiet failure looks exactly like a recorder that is still listening, so
+// every code has to reach the writer. `network` is the one that actually bit:
+// the mic opens, the browser's transcription service never answers.
+print("\nrecognizer errors");
+
+function freshCompose() {
+    $("speech-fallback").hidden = true;
+    $("mic-btn").disabled = false;
+    $("mic-btn").click();
+    return latest();
+}
+
+var rec = freshCompose();
+rec.fail("network");
+check("network: fallback box shown", $("speech-fallback").hidden, false);
+check("network: reason names the browser's service",
+      $("fallback-reason").textContent.indexOf("couldn't reach the service") >= 0, true);
+check("network: status says transcription, not microphone",
+      $("status").textContent, "Transcription unavailable");
+check("network: diagnosis carries the code",
+      $("mic-diag").textContent.indexOf("recognizer error: network") >= 0, true);
+check("network: recording stopped", $("mic-btn").dataset.live, "false");
+
+rec = freshCompose();
+rec.fail("language-not-supported");
+check("language-not-supported: fallback shown", $("speech-fallback").hidden, false);
+check("language-not-supported: names the language",
+      $("fallback-reason").textContent.indexOf("en-US") >= 0, true);
+
+rec = freshCompose();
+rec.fail("some-code-from-the-future");
+check("unknown code: still reaches the writer", $("speech-fallback").hidden, false);
+check("unknown code: quotes the code",
+      $("fallback-reason").textContent.indexOf("some-code-from-the-future") >= 0, true);
+
+// aborted is what stop() raises; it must not look like a failure.
+rec = freshCompose();
+rec.fail("aborted");
+check("aborted: no fallback", $("speech-fallback").hidden, true);
+check("aborted: still recording", $("mic-btn").dataset.live, "true");
+hooks.stopRecording();
+
+// no-speech keeps the recorder running and only nudges the status line.
+rec = freshCompose();
+rec.fail("no-speech");
+check("no-speech: no fallback", $("speech-fallback").hidden, true);
+check("no-speech: prompts to keep going", $("status").textContent, "Didn't catch that \u2014 keep talking");
+check("no-speech: still recording", $("mic-btn").dataset.live, "true");
+hooks.stopRecording();
 
 print(failures ? "\n" + failures + " FAILED" : "\nall passed");
