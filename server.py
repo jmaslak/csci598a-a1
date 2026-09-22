@@ -10,9 +10,10 @@ hand the page a microphone.
 It binds loopback on 8777 unless HOST / PORT are set in the environment; a
 hosting platform such as Render sets PORT and render.yaml sets HOST=0.0.0.0.
 
-Every route except /healthz is behind HTTP Basic auth, with the username and
-password read from .env (BASIC_AUTH_USER / BASIC_AUTH_PASS). The server refuses
-to start if either is missing rather than serving the page unprotected.
+When BASIC_AUTH_USER and BASIC_AUTH_PASS are both set (in .env or the
+environment), every route except /healthz is behind HTTP Basic auth. When both
+are unset, auth is off and nothing prompts. Setting only one is treated as a
+mistake: the server refuses to start rather than guess which was meant.
 
 Anthropic credentials come from the SDK's normal resolution order:
 ANTHROPIC_API_KEY, then ANTHROPIC_AUTH_TOKEN, then an `ant auth login` profile;
@@ -74,6 +75,7 @@ load_dotenv()
 
 AUTH_USER = os.environ.get("BASIC_AUTH_USER", "")
 AUTH_PASS = os.environ.get("BASIC_AUTH_PASS", "")
+AUTH_ENABLED = bool(AUTH_USER and AUTH_PASS)
 
 
 class Entry(BaseModel):
@@ -259,7 +261,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _gate(self) -> bool:
         """Answer the challenge and stop the request when unauthenticated."""
-        if self._authorized():
+        if not AUTH_ENABLED or self._authorized():
             return True
         self._challenge()
         return False
@@ -390,19 +392,25 @@ def main() -> int:
         print(f"Missing web root: {WEB_ROOT}", file=sys.stderr)
         return 1
 
-    # Fail closed: a missing credential must not quietly serve the page open.
-    if not AUTH_USER or not AUTH_PASS:
+    # Both set turns auth on, neither turns it off. Exactly one is a typo or a
+    # half-finished edit, and must not quietly serve the page open.
+    if bool(AUTH_USER) != bool(AUTH_PASS):
         print(
-            "BASIC_AUTH_USER and BASIC_AUTH_PASS must both be set.\n"
-            "Put them in .env (see .env.example) or, on a hosting platform, in the\n"
-            "service's environment variables, then start again.",
+            "Only one of BASIC_AUTH_USER and BASIC_AUTH_PASS is set.\n"
+            "Set both to require a login, or neither to run without one. They go in\n"
+            ".env (see .env.example) or, on a hosting platform, in the service's\n"
+            "environment variables.",
             file=sys.stderr,
         )
         return 1
 
     server = ThreadingHTTPServer((HOST, PORT), partial(Handler, directory=str(WEB_ROOT)))
     print(f"Composer running at http://{HOST}:{PORT}  (model: {MODEL})")
-    print(f"Basic auth: on, user {AUTH_USER!r}.")
+    if AUTH_ENABLED:
+        print(f"Basic auth: on, user {AUTH_USER!r}.")
+    else:
+        print("Basic auth: OFF - BASIC_AUTH_USER / BASIC_AUTH_PASS not set; anyone who")
+        print("can reach this port can use the page and spend the Anthropic key.")
     if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
         print("Anthropic credential: found.")
     else:

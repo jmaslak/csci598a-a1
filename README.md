@@ -44,8 +44,9 @@ Then open <http://127.0.0.1:8777/>.
 <https://console.anthropic.com/settings/keys>) and the Basic auth username and
 password. Exported environment variables take precedence over the file.
 
-The browser prompts for the username and password on first load; the API routes
-are behind the same gate. On startup the server prints whether auth is on and
+With both auth variables set, the browser prompts for the username and
+password on first load and the API routes are behind the same gate; with
+neither set, nothing prompts. On startup the server prints whether auth is on and
 whether it found an Anthropic credential — without the latter, cleanup falls
 back to the on-device path.
 
@@ -62,13 +63,17 @@ so it is safe to run repeatedly and whether or not a server is already up.
 
 ## Basic auth
 
-Every route — the page and the API endpoints — requires HTTP Basic
-credentials, taken from `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` in `.env`. The
-one exception is `GET /healthz`, the hosting platform's liveness probe, which
-answers `ok` and nothing else.
+When `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` are both set, every route — the
+page and the API endpoints — requires HTTP Basic credentials. The one exception
+is `GET /healthz`, the hosting platform's liveness probe, which answers `ok` and
+nothing else.
 
-- **Fails closed.** If either variable is missing the server prints why and
-  exits rather than serving the page unprotected.
+- **Optional.** With neither variable set, auth is off and the browser never
+  prompts. The startup banner says `Basic auth: OFF` so it is not missed.
+  Without auth, anyone who can reach the port can use the page and spend the
+  Anthropic key — fine on loopback, not on a public host.
+- **Half-set fails closed.** If exactly one variable is set the server prints
+  why and exits rather than guessing whether a login was meant.
 - **Constant-time comparison.** Both halves go through `hmac.compare_digest`,
   combined with `&` rather than `and`, so a wrong username takes the same time
   as a wrong password.
@@ -175,7 +180,9 @@ One-time setup, in this order:
 2. **Set the environment variables** on the service: `PYTHON_VERSION=3.13.5`,
    `HOST=0.0.0.0`, and the three from `.env.example` — `ANTHROPIC_API_KEY`,
    `BASIC_AUTH_USER`, `BASIC_AUTH_PASS`. The page is now on the public
-   internet, so pick a real password here rather than the local one.
+   internet, so pick a real password here rather than the local one. Leaving
+   both auth variables out makes the hosted copy open to anyone with the URL,
+   spending your API key.
 
 3. **Give the workflow the deploy hook.** *Settings → Deploy Hook* on the
    service shows a URL; store it as the repository secret
@@ -195,9 +202,9 @@ secret the checks still run and the deploy step is skipped, so any clone of
 the repo gets CI for free.
 
 The free instance sleeps after fifteen minutes without traffic and takes
-30–60 seconds to wake, so open the URL once before a demo. Basic auth still
-gates the hosted copy; the browser prompts on first load just as it does
-locally.
+30–60 seconds to wake, so open the URL once before a demo. With the auth
+variables set, Basic auth gates the hosted copy; the browser prompts on first
+load just as it does locally.
 
 ## Why it runs locally
 
@@ -387,7 +394,7 @@ guessing would be worse than staying quiet.
 | Disk | ~50 MB | The venv measures 44 MB. |
 | Network | outbound HTTPS to `api.anthropic.com` | Every cleanup and revision is an API call. |
 | Credential | an Anthropic API key | Without one the page silently drops to on-device cleanup. |
-| Auth | `BASIC_AUTH_USER` + `BASIC_AUTH_PASS` | Required — the server exits without them. |
+| Auth | `BASIC_AUTH_USER` + `BASIC_AUTH_PASS` | Optional — both set turns auth on, neither turns it off; exactly one makes the server exit. |
 | Port | 8777 free on loopback | Defaults in `server.py`; `HOST` and `PORT` in the environment override them, which is how a hosting platform hands the server its port. |
 | OS | anything with POSIX `sh`, `lsof`, `nohup` | Only `reload.sh` needs these — macOS and Linux qualify. On Windows run `server.py` directly. |
 

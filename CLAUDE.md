@@ -25,7 +25,7 @@ sed -n '/^<script>$/,/^<\/script>$/p' composer.html | sed '1d;$d' > /tmp/compose
 `node test_recorder.js` runs the same file where node works. `node` is broken
 on the original Mac (missing `libllhttp` dylib) — use `jsc` there.
 
-The server requires Basic auth, so manual checks need credentials:
+With auth configured, manual checks need credentials:
 
 ```sh
 curl -u csci598a:csci598a http://127.0.0.1:8777/
@@ -84,8 +84,10 @@ Things that look arbitrary and are not:
   explicitly; without it, dictated sentences get pasted into the entry.
 - **`mentions_person` ignores bare first-person narration.** "I'm tired" does
   not say whose site this is. Loosening this makes the check always pass.
-- **Basic auth fails closed.** Missing `BASIC_AUTH_USER`/`BASIC_AUTH_PASS` exits
-  rather than serving unprotected.
+- **Basic auth is optional but never half-on.** Both `BASIC_AUTH_USER` and
+  `BASIC_AUTH_PASS` set → every route but `/healthz` is gated; neither set →
+  no prompt at all (`AUTH_ENABLED` false, banner says `OFF`); exactly one set
+  → exit. The half-set case is a misconfiguration and must not serve open.
 - **`/healthz` is the only route outside the auth gate.** It is Render's
   liveness probe and answers `ok`, nothing more — never add version, config
   or credential state to it. The match is exact (`self.path == "/healthz"`).
