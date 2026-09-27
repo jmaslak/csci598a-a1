@@ -208,7 +208,7 @@ check("guided: the earlier answer is still there",
 $("guided-skip").click();
 $("guided-sample").click();
 check("guided: sample answer loads for this question",
-      $("guided-live").textContent.indexOf("chest pain") >= 0, true);
+      $("guided-live").textContent.indexOf("had a stroke") >= 0, true);
 $("guided-next").click();
 
 var guidedText = window.__composerTestHooks.guidedTranscript;
